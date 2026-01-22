@@ -315,7 +315,7 @@
         <div class="dot" aria-hidden="true"></div>
         <div>
           <div>Crear Pedido (PC)</div>
-          <div class="sub">Pedido: POST https://panel.lucidsales.co/b/api/v1/orders/create</div>
+          <div class="sub">Usa tu API Key para cargar productos y enviar el pedido</div>
         </div>
       </div>
       <div class="pill"><span class="swatch" aria-hidden="true"></span> Blanco + Azul</div>
@@ -330,8 +330,8 @@
           <div>
             <h2 class="card-title">Pedido + Productos</h2>
             <p class="card-desc">
-              Solo puedes añadir productos obtenidos del GET de productos.
-              No hay creación manual.
+              Solo puedes añadir productos obtenidos del listado.
+              La variante NO es obligatoria.
             </p>
           </div>
         </div>
@@ -365,8 +365,8 @@
           <!-- PRODUCTS GET -->
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;">
             <div>
-              <div style="font-weight:950;">Productos (GET)</div>
-              <div class="mini">Endpoint: <span class="mono">GET https://panel.lucidsales.co/b/api/v1/products/</span></div>
+              <div style="font-weight:950;">Productos</div>
+              <div class="mini">Cárgalos con tu API Key y selecciona un producto (variante opcional).</div>
             </div>
             <button class="btn btn-soft" type="button" id="loadProductsBtn">Cargar productos</button>
           </div>
@@ -379,7 +379,7 @@
               </select>
             </div>
             <div class="field">
-              <label for="variantSelect">Variante</label>
+              <label for="variantSelect">Variante (opcional)</label>
               <select id="variantSelect" disabled>
                 <option value="">(Selecciona un producto)</option>
               </select>
@@ -388,26 +388,27 @@
 
           <div class="row">
             <div class="field">
-              <label for="selectedProductId">product_id (lucidsales)</label>
+              <label for="selectedProductId">Referencia producto</label>
               <input id="selectedProductId" readonly placeholder="Se llena al elegir producto" />
-              <div class="hint">Se enviará como string: <span class="mono">ls-prod-xxxxx</span></div>
+              <div class="hint">Solo referencia visual (no se usa en el JSON).</div>
             </div>
             <div class="field">
-              <label for="selectedVariantId">variation_id (lucidsales)</label>
-              <input id="selectedVariantId" readonly placeholder="Se llena al elegir variante" />
-              <div class="hint">Se enviará como string: <span class="mono">ls-var-xxxxx</span></div>
+              <label for="selectedVariantId">Referencia variante</label>
+              <input id="selectedVariantId" readonly placeholder="Se llena al elegir variante (si aplica)" />
+              <div class="hint">Solo referencia visual (no se usa en el JSON).</div>
             </div>
           </div>
 
           <div class="row">
             <div class="field">
               <label for="suggestedPrice">Precio sugerido</label>
-              <input id="suggestedPrice" readonly placeholder="(Se mostrará según product/variant)" />
+              <input id="suggestedPrice" readonly placeholder="(Según product/variant)" />
+              <div class="hint">En el JSON, <span class="mono">price</span> va en <span class="mono">null</span> salvo que lo escribas explícitamente en el pedido.</div>
             </div>
             <div class="field" style="justify-content:flex-end;">
               <label style="opacity:0;">.</label>
               <button class="btn btn-primary" type="button" id="addToOrderBtn" disabled>Agregar al pedido</button>
-              <div class="hint">Agrega el producto/variante seleccionados al pedido.</div>
+              <div class="hint">Si no eliges variante, se agrega como ítem sin variaciones.</div>
             </div>
           </div>
 
@@ -507,9 +508,10 @@
           <div style="margin-top:16px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
               <div>
-                <div style="font-weight:950;">Productos del pedido</div>
+                <div style="font-weight:950;">Ítems del pedido</div>
                 <div class="mini">
-                  Solo se agregan desde el GET. Puedes ajustar price/quantity. Si dejas price vacío, se envía <span class="mono">null</span>.
+                  En el JSON final, <span class="mono">products</span> se agrupa por <span class="mono">product_name</span>.
+                  Si el ítem tiene variaciones, el <span class="mono">quantity</span> del producto va en <span class="mono">null</span>.
                 </div>
               </div>
             </div>
@@ -524,10 +526,8 @@
           </div>
 
           <div class="footnote">
-            <div><b>Productos:</b> <span class="mono">GET https://panel.lucidsales.co/b/api/v1/products/</span></div>
-            <div>Header: <span class="mono">Authorization: {api_key}</span></div>
-            <div style="margin-top:8px;"><b>Pedido:</b> <span class="mono">POST https://panel.lucidsales.co/b/api/v1/orders/create</span></div>
-            <div>Header: <span class="mono">Authorization: {api_key}</span> • Body: <span class="mono">application/json</span></div>
+            <div><b>Nota:</b> La variante es opcional. Si no eliges una, el ítem se envía con <span class="mono">variations: []</span> y <span class="mono">quantity</span> a nivel producto.</div>
+            <div>Se usa <span class="mono">Authorization: {api_key}</span> en los llamados.</div>
           </div>
         </div>
       </div>
@@ -537,7 +537,7 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">JSON enviado y respuestas</h2>
-            <p class="card-desc">JSON exacto del pedido + respuesta del GET productos + respuesta del POST pedido.</p>
+            <p class="card-desc">JSON exacto del pedido + respuesta del listado de productos + respuesta del pedido.</p>
           </div>
         </div>
 
@@ -567,7 +567,7 @@
     const el = (id) => document.getElementById(id);
 
     const state = {
-      orderProducts: [],   // only from GET products
+      orderProducts: [],   // items added from selection (pre-group)
       apiProducts: [],     // normalized list from GET
       selectedProductIdx: -1,
       selectedVariantIdx: -1
@@ -585,6 +585,40 @@
       if(t === "") return fallback;
       const n = parseInt(t, 10);
       return Number.isFinite(n) ? n : fallback;
+    }
+    function parseQtyBeforeX(v, fallback = 1){
+      const t = safeTrim(v);
+      if(t === "") return fallback;
+      const m = t.match(/^\s*(\d+)\s*(?:x|×)\b/i);
+      if(m) return asInt(m[1], fallback);
+      return asInt(t, fallback);
+    }
+    function parsePriceSmart(v){
+      const t0 = safeTrim(v);
+      if(t0 === "") return null;
+
+      const t = t0.replace(/\s+/g, "");
+      // 1.234.567,89  -> thousands ".", decimal ","
+      if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)){
+        const normalized = t.replace(/\./g, "").replace(",", ".");
+        const n = Number(normalized);
+        return Number.isFinite(n) ? n : t0;
+      }
+      // 1,234,567.89 -> thousands ",", decimal "."
+      if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)){
+        const normalized = t.replace(/,/g, "");
+        const n = Number(normalized);
+        return Number.isFinite(n) ? n : t0;
+      }
+      // 1234,56 -> decimal ","
+      if(/^\d+(,\d+)$/.test(t)){
+        const normalized = t.replace(",", ".");
+        const n = Number(normalized);
+        return Number.isFinite(n) ? n : t0;
+      }
+      // fallback
+      const n = Number(t);
+      return Number.isFinite(n) ? n : t0;
     }
     function escapeHtml(str){
       return String(str ?? "")
@@ -645,27 +679,24 @@
       if(!Array.isArray(body.products)) throw new Error("No existe products[] en la respuesta.");
 
       // normalize: keep id, name, price, variants[]
-      return body.products.map(p => ({
+      return body.products.map(p => (typeof p === "object" && p ? ({
         id: p.id,
         name: p.name ?? "",
         price: p.price,
-        variants: Array.isArray(p.variants) ? p.variants.map(v => ({
+        variants: Array.isArray(p.variants) ? p.variants.map(v => (typeof v === "object" && v ? ({
           id: v.id,
           name: v.name ?? "",
           price: v.price
-        })) : []
-      }));
+        }) : null)).filter(Boolean) : []
+      }) : null)).filter(Boolean);
     }
 
     function lsProductIdFromNumericId(id){
-      // you used "ls-prod-xxxxx" before; now API returns numeric id.
-      // We'll map numeric -> "ls-prod-<zero padded 5>" to keep your order schema stable.
       const n = Number(id);
       if(!Number.isFinite(n)) return "";
       return "ls-prod-" + String(n).padStart(5, "0");
     }
     function lsVariantIdFromRawId(id){
-      // API returns string like "gHiDIfldNnlv". We'll keep "ls-var-" prefix.
       const t = safeTrim(id);
       return t ? ("ls-var-" + t) : "";
     }
@@ -697,15 +728,18 @@
       const p = state.apiProducts[productIdx];
       const variants = Array.isArray(p?.variants) ? p.variants : [];
 
+      // Si NO hay variantes, dejamos selector con "Sin variantes"
       if(variants.length === 0){
-        sel.innerHTML = `<option value="__none__">(Sin variante)</option>`;
+        sel.innerHTML = `<option value="__none__">(Sin variantes)</option>`;
         el("selectedVariantId").value = "";
-        // suggested price from product price (if number) else empty
         el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
         return;
       }
 
+      // Variante NO obligatoria: incluye "Sin variante" explícita
+      sel.appendChild(new Option("(Sin variante)", "__none__"));
       sel.appendChild(new Option("(Selecciona una variante)", ""));
+
       variants.forEach((v, vIdx) => {
         const opt = document.createElement("option");
         opt.value = String(vIdx);
@@ -769,32 +803,29 @@
     }
 
     function makeOrderItemFromSelection(p, vOrNull){
-      const productId = lsProductIdFromNumericId(p?.id);
       const productName = p?.name ?? "";
+      const productIdRef = lsProductIdFromNumericId(p?.id);
 
-      let variantId = "";
-      let variantName = "";
-      let priceSuggested = null;
+      // Precio por defecto: null (solo si el usuario lo escribe explícitamente en el pedido)
+      const base = {
+        product_name: productName,
+        price: null,
+        quantity: 1,
+        variations: [],
+        _meta: { product_id_ref: productIdRef, variation_id_ref: "" }
+      };
 
       if(vOrNull){
-        variantId = lsVariantIdFromRawId(vOrNull?.id);
-        variantName = vOrNull?.name ?? "";
-        priceSuggested = (typeof vOrNull?.price === "number") ? vOrNull.price : null;
-      }else{
-        priceSuggested = (typeof p?.price === "number") ? p.price : null;
+        base.quantity = null; // Con variaciones: quantity null a nivel producto
+        base.variations = [{
+          variation_name: vOrNull?.name ?? "",
+          price: null,
+          quantity: 1
+        }];
+        base._meta.variation_id_ref = lsVariantIdFromRawId(vOrNull?.id);
       }
 
-      return {
-        product_id: productId,
-        price: null,      // product-level price allowed null
-        quantity: null,   // allowed null
-        variations: [{
-          variation_id: variantId,
-          price: priceSuggested === null ? null : String(priceSuggested),
-          quantity: 1
-        }],
-        _meta: { product_name: productName, variant_name: variantName }
-      };
+      return base;
     }
 
     function renderOrderProducts(){
@@ -802,24 +833,28 @@
       wrap.innerHTML = "";
 
       if(state.orderProducts.length === 0){
-        wrap.innerHTML = `<div class="hint">Aún no has agregado productos. Usa “Agregar al pedido”.</div>`;
+        wrap.innerHTML = `<div class="hint">Aún no has agregado ítems. Usa “Agregar al pedido”.</div>`;
         refreshJsonPreview();
         return;
       }
 
       state.orderProducts.forEach((p, idx) => {
-        const titleName = safeTrim(p?._meta?.product_name) || `Producto #${idx+1}`;
-        const subName = safeTrim(p?._meta?.variant_name);
-        const subtitle = subName ? `${subName}` : "Sin variante";
+        const titleName = safeTrim(p?.product_name) || `Producto #${idx+1}`;
+        const hasVars = Array.isArray(p?.variations) && p.variations.length > 0;
+        const subName = hasVars ? safeTrim(p?.variations?.[0]?.variation_name) : "";
+        const subtitle = hasVars ? (subName || "Variación") : "Sin variaciones";
 
         const card = document.createElement("div");
         card.className = "product";
+
+        const priceVal = (p.price === null ? "" : String(p.price));
+        const qtyVal  = (p.quantity === null ? "" : String(p.quantity));
 
         card.innerHTML = `
           <div class="product-head">
             <div>
               <div class="product-title">${escapeHtml(titleName)}</div>
-              <div class="mini">${escapeHtml(subtitle)}<br/>Puedes ajustar price/quantity. Si dejas price vacío, se envía null.</div>
+              <div class="mini">${escapeHtml(subtitle)}<br/>Precio por defecto: null (solo se envía si lo escribes).</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <button class="btn btn-danger" type="button" data-remove-item="${idx}">Quitar</button>
@@ -828,24 +863,26 @@
 
           <div class="row">
             <div class="field">
-              <label>product_id</label>
-              <input readonly value="${escapeHtml(p.product_id)}" />
-              <div class="hint">Bloqueado (proviene del GET)</div>
+              <label>product_name</label>
+              <input readonly value="${escapeHtml(p.product_name)}" />
+              <div class="hint">Exacto como viene del listado.</div>
             </div>
             <div class="field">
               <label>price (vacío = null)</label>
-              <input placeholder="(vacío envía null)" value="${p.price === null ? "" : escapeHtml(String(p.price))}" data-item-field="price" data-idx="${idx}" />
+              <input placeholder="(vacío envía null)" value="${escapeHtml(priceVal)}" data-item-field="price" data-idx="${idx}" />
             </div>
           </div>
 
           <div class="row">
             <div class="field">
-              <label>quantity (vacío = null)</label>
-              <input type="number" step="1" placeholder="(vacío envía null)" value="${p.quantity === null ? "" : escapeHtml(String(p.quantity))}" data-item-field="quantity" data-idx="${idx}" />
+              <label>quantity ${hasVars ? "(con variaciones, se envía null)" : "(sin variaciones, se envía number)"}</label>
+              <input ${hasVars ? "readonly" : 'type="number" step="1"'} placeholder="${hasVars ? "(se envía null)" : "1"}"
+                value="${escapeHtml(hasVars ? "" : qtyVal)}" data-item-field="quantity" data-idx="${idx}" />
+              <div class="hint">${hasVars ? "Este campo no aplica cuando hay variaciones." : "Cantidad total del ítem."}</div>
             </div>
             <div class="field">
               <label style="opacity:0;">.</label>
-              <div class="hint">Deja vacío para enviar null.</div>
+              <div class="hint">${hasVars ? "La cantidad va en cada variación." : "Variations se envía como []"}</div>
             </div>
           </div>
 
@@ -855,42 +892,51 @@
         wrap.appendChild(card);
 
         const varsWrap = card.querySelector(`#vars-${idx}`);
-        (p.variations || []).forEach((v, vIdx) => {
-          const vBox = document.createElement("div");
-          vBox.className = "variation";
-          vBox.innerHTML = `
-            <div class="variation-head">
-              <div style="font-weight:950; font-size:12px;">Variación</div>
-              <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar variación</button>
-            </div>
+        if(hasVars){
+          (p.variations || []).forEach((v, vIdx) => {
+            const vBox = document.createElement("div");
+            vBox.className = "variation";
 
-            <div class="row">
-              <div class="field">
-                <label>variation_id</label>
-                <input readonly value="${escapeHtml(v.variation_id)}" />
-                <div class="hint">Bloqueado (proviene del GET)</div>
-              </div>
-              <div class="field">
-                <label>price (vacío = null)</label>
-                <input placeholder="(vacío envía null)" value="${v.price === null ? "" : escapeHtml(String(v.price))}"
-                  data-var-field="price" data-idx="${idx}" data-v-idx="${vIdx}" />
-              </div>
-            </div>
+            const vPriceVal = (v.price === null ? "" : String(v.price));
+            const vQtyVal = (v.quantity ?? 1);
 
-            <div class="row">
-              <div class="field">
-                <label>quantity (number)</label>
-                <input type="number" step="1" placeholder="1" value="${escapeHtml(String(v.quantity ?? 1))}"
-                  data-var-field="quantity" data-idx="${idx}" data-v-idx="${vIdx}" />
+            vBox.innerHTML = `
+              <div class="variation-head">
+                <div style="font-weight:950; font-size:12px;">Variación</div>
+                <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar variación</button>
               </div>
-              <div class="field">
-                <label style="opacity:0;">.</label>
-                <div class="hint">Por defecto: 1</div>
+
+              <div class="row">
+                <div class="field">
+                  <label>variation_name</label>
+                  <input readonly value="${escapeHtml(v.variation_name)}" />
+                  <div class="hint">Texto exacto de la combinación.</div>
+                </div>
+                <div class="field">
+                  <label>price (vacío = null)</label>
+                  <input placeholder="(vacío envía null)" value="${escapeHtml(vPriceVal)}"
+                    data-var-field="price" data-idx="${idx}" data-v-idx="${vIdx}" />
+                </div>
               </div>
-            </div>
-          `;
-          varsWrap.appendChild(vBox);
-        });
+
+              <div class="row">
+                <div class="field">
+                  <label>quantity</label>
+                  <input type="text" placeholder="1 (o 2x)" value="${escapeHtml(String(vQtyVal))}"
+                    data-var-field="quantity" data-idx="${idx}" data-v-idx="${vIdx}" />
+                  <div class="hint">Si escribes “2x”, se toma el número antes de la x.</div>
+                </div>
+                <div class="field">
+                  <label style="opacity:0;">.</label>
+                  <div class="hint">Por defecto: 1</div>
+                </div>
+              </div>
+            `;
+            varsWrap.appendChild(vBox);
+          });
+        }else{
+          varsWrap.innerHTML = `<div class="hint">Sin variaciones.</div>`;
+        }
       });
 
       bindOrderEvents();
@@ -906,8 +952,18 @@
           const item = state.orderProducts[idx];
           if(!item) return;
 
-          if(field === "price") item.price = (safeTrim(raw) === "") ? null : raw;
-          if(field === "quantity") item.quantity = (safeTrim(raw) === "") ? null : asInt(raw, 0);
+          const hasVars = Array.isArray(item.variations) && item.variations.length > 0;
+
+          if(field === "price"){
+            item.price = (safeTrim(raw) === "") ? null : raw;
+          }
+          if(field === "quantity"){
+            if(hasVars){
+              item.quantity = null; // forzado por regla
+            }else{
+              item.quantity = (safeTrim(raw) === "") ? 1 : parseQtyBeforeX(raw, 1);
+            }
+          }
 
           refreshJsonPreview();
         };
@@ -922,8 +978,12 @@
           const item = state.orderProducts[idx];
           if(!item || !item.variations[vIdx]) return;
 
-          if(field === "price") item.variations[vIdx].price = (safeTrim(raw) === "") ? null : raw;
-          if(field === "quantity") item.variations[vIdx].quantity = asInt(raw, 1);
+          if(field === "price"){
+            item.variations[vIdx].price = (safeTrim(raw) === "") ? null : raw;
+          }
+          if(field === "quantity"){
+            item.variations[vIdx].quantity = parseQtyBeforeX(raw, 1);
+          }
 
           refreshJsonPreview();
         };
@@ -943,12 +1003,109 @@
           const vIdx = Number(btn.getAttribute("data-v-idx"));
           const item = state.orderProducts[idx];
           if(!item) return;
+
           item.variations.splice(vIdx, 1);
+
+          // Si quedó sin variaciones, se convierte en ítem sin variaciones
           if(item.variations.length === 0){
-            item.variations.push({ variation_id:"", price:null, quantity:1 });
+            item.quantity = 1;
+          }else{
+            item.quantity = null;
           }
+
           renderOrderProducts();
         };
+      });
+    }
+
+    function buildGroupedProductsForPayload(){
+      // "products" (agrupar por nombre exacto del producto):
+      // - product_name: exacto
+      // - price: null salvo que se proporcione explícito
+      // Con variaciones:
+      // - quantity: null en producto
+      // - variations: [{ variation_name, price, quantity }]
+      // Sin variaciones:
+      // - variations: [] y quantity = total del ítem
+      const map = new Map();
+
+      for(const item of (state.orderProducts || [])){
+        const productName = safeTrim(item?.product_name);
+        if(!productName) continue;
+
+        if(!map.has(productName)){
+          map.set(productName, { product_name: productName, price: null, quantity: null, variations: [] });
+        }
+        const group = map.get(productName);
+
+        const itemPrice = parsePriceSmart(item?.price);
+        if(itemPrice !== null && group.price === null){
+          group.price = itemPrice;
+        }
+
+        const vars = Array.isArray(item?.variations) ? item.variations.filter(v => safeTrim(v?.variation_name) !== "") : [];
+
+        if(vars.length > 0){
+          group.quantity = null;
+
+          for(const v of vars){
+            const vName = safeTrim(v?.variation_name);
+            if(!vName) continue;
+
+            const vPrice = parsePriceSmart(v?.price);
+            const vQty = parseQtyBeforeX(v?.quantity, 1);
+
+            // merge by exact variation_name + exact price (null/number/string)
+            const match = group.variations.find(x =>
+              x.variation_name === vName &&
+              (x.price ?? null) === (vPrice ?? null)
+            );
+
+            if(match){
+              match.quantity = parseQtyBeforeX(match.quantity, 0) + vQty;
+            }else{
+              group.variations.push({
+                variation_name: vName,
+                price: vPrice,
+                quantity: vQty
+              });
+            }
+          }
+        }else{
+          // no variations
+          const qty = parseQtyBeforeX(item?.quantity, 1);
+
+          if(group.variations.length > 0){
+            // Si ya hay variaciones en este producto, no podemos usar quantity del producto.
+            // Guardamos este "sin variante" como una variación explícita.
+            group.quantity = null;
+            const vName = "Sin variante";
+            const vPrice = null;
+
+            const match = group.variations.find(x => x.variation_name === vName && (x.price ?? null) === vPrice);
+            if(match){
+              match.quantity = parseQtyBeforeX(match.quantity, 0) + qty;
+            }else{
+              group.variations.push({ variation_name: vName, price: vPrice, quantity: qty });
+            }
+          }else{
+            // grupo puro sin variaciones
+            group.variations = [];
+            group.quantity = (group.quantity === null) ? qty : (parseQtyBeforeX(group.quantity, 0) + qty);
+          }
+        }
+      }
+
+      // normaliza: si no hay variaciones, quantity nunca debe ser null
+      return Array.from(map.values()).map(g => {
+        const hasVars = Array.isArray(g.variations) && g.variations.length > 0;
+        if(!hasVars){
+          g.variations = [];
+          if(g.quantity === null) g.quantity = 1;
+        }else{
+          g.quantity = null;
+        }
+        return g;
       });
     }
 
@@ -971,16 +1128,8 @@
         city: safeTrim(el("city").value),
         state: safeTrim(el("state").value),
 
-        products: state.orderProducts.map(p => ({
-          product_id: safeTrim(p.product_id),
-          price: (p.price === null || safeTrim(p.price) === "") ? null : p.price,
-          variations: (p.variations || []).map(v => ({
-            variation_id: safeTrim(v.variation_id),
-            price: (v.price === null || safeTrim(v.price) === "") ? null : v.price,
-            quantity: asInt(v.quantity, 1)
-          })),
-          quantity: (p.quantity === null || safeTrim(String(p.quantity)) === "") ? null : asInt(p.quantity, 0)
-        })),
+        // NUEVO: agrupado por product_name exacto
+        products: buildGroupedProductsForPayload(),
 
         references: safeTrim(el("references").value),
         rate_type: asInt(el("rate_type").value, 0),
@@ -1058,6 +1207,7 @@
       let v = null;
       const vSel = el("variantSelect").value;
 
+      // Variante NO obligatoria
       if(vSel !== "" && vSel !== "__none__" && variants.length){
         v = variants[Number(vSel)] || null;
       }
@@ -1077,8 +1227,8 @@
       }
 
       if(state.orderProducts.length === 0){
-        setStatus("bad", "Agrega al menos 1 producto del listado.");
-        el("respBox").textContent = "No hay productos en el pedido. Usa “Agregar al pedido”.";
+        setStatus("bad", "Agrega al menos 1 ítem.");
+        el("respBox").textContent = "No hay ítems en el pedido. Usa “Agregar al pedido”.";
         return;
       }
 

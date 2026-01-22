@@ -145,7 +145,7 @@
       color:var(--muted);
       font-weight:800;
     }
-    input, select{
+    input, select, textarea{
       width:100%;
       border:1px solid var(--border);
       border-radius: 12px;
@@ -155,11 +155,14 @@
       background:#fff;
       transition: .15s ease;
     }
-    input:focus, select:focus{
+    input:focus, select:focus, textarea:focus{
       border-color: rgba(37,99,235,.55);
       box-shadow: 0 0 0 4px rgba(37,99,235,.12);
     }
-    input[readonly]{ background:#f8fafc; color:#334155; }
+    input[readonly]{
+      background: #f8fafc;
+      color: #334155;
+    }
 
     .hint{
       margin-top:6px;
@@ -211,7 +214,11 @@
       font-weight:950;
     }
 
-    .divider{ height:1px; background: var(--border); margin: 14px 0; }
+    .divider{
+      height:1px;
+      background: var(--border);
+      margin: 14px 0;
+    }
 
     .products{
       display:flex;
@@ -231,7 +238,10 @@
       gap:10px;
       margin-bottom:10px;
     }
-    .product-title{ font-weight:950; font-size:13px; }
+    .product-title{
+      font-weight:950;
+      font-size:13px;
+    }
     .mini{
       font-size:12px;
       color:var(--muted);
@@ -298,7 +308,12 @@
     .badge.bad{ color:var(--bad); border-color: rgba(220,38,38,.28); background: rgba(220,38,38,.08); }
     .badge.neutral{ color:var(--muted); background: rgba(100,116,139,.08); border-color: rgba(100,116,139,.20); }
 
-    .small-muted{ font-size:12px; color:var(--muted); font-weight:800; }
+    .small-muted{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+    }
+
     .footnote{
       margin-top:14px;
       font-size:12px;
@@ -306,6 +321,11 @@
       font-weight:700;
       line-height:1.45;
     }
+    .kpi{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .kpi .pill{ font-weight:900; }
   </style>
 </head>
 <body>
@@ -315,10 +335,12 @@
         <div class="dot" aria-hidden="true"></div>
         <div>
           <div>Crear Pedido (PC)</div>
-          <div class="sub">Pedido: POST https://panel.lucidsales.co/b/api/v1/orders/create</div>
+          <div class="sub">Pedidos: POST https://panel.lucidsales.co/b/api/v1/orders/create</div>
         </div>
       </div>
-      <div class="pill"><span class="swatch" aria-hidden="true"></span> Blanco + Azul</div>
+      <div class="pill" title="Tema">
+        <span class="swatch" aria-hidden="true"></span> Blanco + Azul
+      </div>
     </div>
   </div>
 
@@ -330,19 +352,24 @@
           <div>
             <h2 class="card-title">Pedido + Catálogo</h2>
             <p class="card-desc">
-              Solo puedes añadir productos obtenidos del catálogo (bot field 663869).
-              No hay creación manual.
+              1) Pega el API Key<br/>
+              2) Carga el catálogo (bot field 663869) y agrega productos/variantes al pedido<br/>
+              3) Envía y mira la respuesta
             </p>
+            <div class="kpi">
+              <span class="pill"><span class="swatch" style="background:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.12)"></span> Catálogo: GET panel.lucidbot.co</span>
+              <span class="pill"><span class="swatch" style="background:var(--cyan)"></span> Pedido: POST panel.lucidsales.co</span>
+            </div>
           </div>
         </div>
 
         <div class="card-body">
           <div class="row">
             <div class="field">
-              <label for="apiKey">API Key (para ambos llamados)</label>
+              <label for="apiKey">API Key (se usa para ambos llamados)</label>
               <input id="apiKey" placeholder="Pega tu api key aquí" autocomplete="off" />
               <div class="hint">
-                Catálogo: <span class="mono">X-ACCESS-TOKEN</span> • Pedido: <span class="mono">authorization</span>
+                Catálogo: header <span class="mono">X-ACCESS-TOKEN</span> • Pedido: header <span class="mono">authorization</span>
               </div>
             </div>
             <div class="field">
@@ -368,7 +395,7 @@
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;">
             <div>
               <div style="font-weight:950;">Catálogo (bot field 663869)</div>
-              <div class="mini">Se toma SOLO <span class="mono">value</span> y se lista <span class="mono">catalogo_de_productos</span>.</div>
+              <div class="mini">Se toma SOLO <span class="mono">value</span> y de ahí se lista <span class="mono">catalogo_de_productos</span>.</div>
             </div>
             <button class="btn btn-soft" type="button" id="loadCatalogBtn">Cargar catálogo</button>
           </div>
@@ -403,6 +430,7 @@
             <div class="field">
               <label for="suggestedPrice">Precio sugerido (según precios_por_cantidad)</label>
               <input id="suggestedPrice" readonly placeholder="(Si existe, se mostrará aquí)" />
+              <div class="hint">Si tu API requiere número, edítalo luego en el producto agregado (abajo).</div>
             </div>
             <div class="field" style="justify-content:flex-end;">
               <label style="opacity:0;">.</label>
@@ -508,10 +536,9 @@
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
               <div>
                 <div style="font-weight:950;">Productos del pedido</div>
-                <div class="mini">
-                  Solo se agregan desde el catálogo. Si dejas price vacío, se envía <span class="mono">null</span>.
-                </div>
+                <div class="mini">Puedes ajustar IDs, cantidades y price. Si dejas price vacío, se envía <span class="mono">null</span>.</div>
               </div>
+              <button class="btn btn-ghost" type="button" id="addEmptyProductBtn">+ Producto vacío</button>
             </div>
 
             <div id="products" class="products"></div>
@@ -567,7 +594,8 @@
 
     const el = (id) => document.getElementById(id);
     const state = {
-      products: [],                // ONLY from catalog
+      products: [],
+      catalogRaw: null,
       catalogProducts: [],
       selectedCatalogProductIdx: -1,
       selectedCatalogVariantIdx: -1
@@ -586,6 +614,7 @@
       const n = parseInt(t, 10);
       return Number.isFinite(n) ? n : fallback;
     }
+
     function escapeHtml(str){
       return String(str ?? "")
         .replaceAll("&","&amp;")
@@ -627,17 +656,25 @@
       if(!pricesObj || typeof pricesObj !== "object") return "";
       const entries = Object.entries(pricesObj);
       if(entries.length === 0) return "";
-      const prefer = entries.find(([k]) => k.includes("1_") || k.includes("1unidad") || k.includes("1_unidad") || k.includes("1"));
+      // prefer keys that look like 1 unit
+      const prefer = entries.find(([k]) => k.includes("1_") || k.includes("1unidad") || k.includes("1_unidad") || k.includes("1_unidades") || k.includes("1"));
       return (prefer ? prefer[1] : entries[0][1]) ?? "";
     }
 
     function normalizeCatalogValue(value){
+      // value could be:
+      // - already an object {catalogo_de_productos:[...]}
+      // - a JSON string with that object
+      // - an array directly
       let v = value;
 
       if(typeof v === "string"){
         const t = v.trim();
-        try{ v = JSON.parse(t); }
-        catch(e){
+        // try JSON parse
+        try{
+          v = JSON.parse(t);
+        }catch(e){
+          // Sometimes it comes double-encoded; try once more after removing outer quotes if any
           try{
             const t2 = t.replace(/^"+|"+$/g, "");
             v = JSON.parse(t2);
@@ -647,365 +684,18 @@
         }
       }
 
-      if(Array.isArray(v)) return { catalogo_de_productos: v };
+      // If it's an array, wrap
+      if(Array.isArray(v)){
+        return { catalogo_de_productos: v };
+      }
 
       if(v && typeof v === "object"){
         if(Array.isArray(v.catalogo_de_productos)) return v;
-        if(Array.isArray(v.catalogo)) return { catalogo_de_productos: v.catalogo };
+        // Some people store under other key; attempt fallback
+        if(Array.isArray(v.catalogo) ) return { catalogo_de_productos: v.catalogo };
       }
 
       throw new Error("El campo value no contiene catalogo_de_productos en formato esperado.");
-    }
-
-    function setCatalogControlsEnabled(enabled){
-      el("catalogProductSelect").disabled = !enabled;
-      el("catalogVariantSelect").disabled = !enabled;
-      el("addFromCatalogBtn").disabled = !enabled;
-      if(!enabled){
-        el("catalogProductSelect").innerHTML = `<option value="">(Carga el catálogo)</option>`;
-        el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
-        el("selectedProductId").value = "";
-        el("selectedVariantId").value = "";
-        el("suggestedPrice").value = "";
-        state.selectedCatalogProductIdx = -1;
-        state.selectedCatalogVariantIdx = -1;
-      }
-    }
-
-    function fillCatalogProductSelect(){
-      const sel = el("catalogProductSelect");
-      sel.innerHTML = `<option value="">(Selecciona un producto)</option>`;
-
-      state.catalogProducts.forEach((p, idx) => {
-        const name = p?.nombre_del_producto ?? `Producto ${idx+1}`;
-        const id = p?.ids_integracion?.lucidsales_product_id ?? "";
-        const opt = document.createElement("option");
-        opt.value = String(idx);
-        opt.textContent = id ? `${name} — ${id}` : name;
-        sel.appendChild(opt);
-      });
-
-      el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
-      el("selectedProductId").value = "";
-      el("selectedVariantId").value = "";
-      el("suggestedPrice").value = "";
-      state.selectedCatalogProductIdx = -1;
-      state.selectedCatalogVariantIdx = -1;
-    }
-
-    function fillCatalogVariantSelect(productIdx){
-      const sel = el("catalogVariantSelect");
-      sel.innerHTML = "";
-
-      const p = state.catalogProducts[productIdx];
-      const variants = Array.isArray(p?.variantes) ? p.variantes : [];
-
-      if(variants.length === 0){
-        sel.innerHTML = `<option value="__none__">(Sin variante)</option>`;
-        state.selectedCatalogVariantIdx = -1;
-        el("selectedVariantId").value = "";
-        el("suggestedPrice").value = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
-        return;
-      }
-
-      sel.appendChild(new Option("(Selecciona una variante)", ""));
-      variants.forEach((v, vIdx) => {
-        const vName = v?.nombre_de_la_variante ?? `Variante ${vIdx+1}`;
-        const vId = v?.lucidsales_variant_id ?? "";
-        const color = safeTrim(v?.color);
-        const label = [vName, color ? `(${color})` : "", vId ? `— ${vId}` : ""].filter(Boolean).join(" ");
-        const opt = document.createElement("option");
-        opt.value = String(vIdx);
-        opt.textContent = label;
-        sel.appendChild(opt);
-      });
-
-      state.selectedCatalogVariantIdx = -1;
-      el("selectedVariantId").value = "";
-      el("suggestedPrice").value = "";
-    }
-
-    function updateSelectedCatalogInfo(){
-      const pIdxStr = el("catalogProductSelect").value;
-      const pIdx = pIdxStr === "" ? -1 : Number(pIdxStr);
-
-      state.selectedCatalogProductIdx = pIdx;
-
-      if(pIdx < 0){
-        el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
-        el("selectedProductId").value = "";
-        el("selectedVariantId").value = "";
-        el("suggestedPrice").value = "";
-        state.selectedCatalogVariantIdx = -1;
-        return;
-      }
-
-      const p = state.catalogProducts[pIdx];
-      el("selectedProductId").value = p?.ids_integracion?.lucidsales_product_id ?? "";
-      fillCatalogVariantSelect(pIdx);
-    }
-
-    function updateSelectedVariantInfo(){
-      const pIdx = state.selectedCatalogProductIdx;
-      if(pIdx < 0) return;
-
-      const p = state.catalogProducts[pIdx];
-      const variants = Array.isArray(p?.variantes) ? p.variantes : [];
-      const vVal = el("catalogVariantSelect").value;
-
-      if(vVal === "__none__"){
-        state.selectedCatalogVariantIdx = -1;
-        el("selectedVariantId").value = "";
-        el("suggestedPrice").value = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
-        return;
-      }
-
-      if(vVal === ""){
-        state.selectedCatalogVariantIdx = -1;
-        el("selectedVariantId").value = "";
-        el("suggestedPrice").value = "";
-        return;
-      }
-
-      const vIdx = Number(vVal);
-      state.selectedCatalogVariantIdx = vIdx;
-      const v = variants[vIdx];
-      el("selectedVariantId").value = v?.lucidsales_variant_id ?? "";
-      el("suggestedPrice").value = getSuggestedPriceFromPricesObj(v?.precios_por_cantidad) || "";
-    }
-
-    function makeProductFromCatalog(p, vOrNull){
-      const productId = p?.ids_integracion?.lucidsales_product_id ?? "";
-      const productName = p?.nombre_del_producto ?? "";
-
-      let variantId = "";
-      let variantName = "";
-      let suggested = "";
-
-      if(vOrNull){
-        variantId = vOrNull?.lucidsales_variant_id ?? "";
-        variantName = vOrNull?.nombre_de_la_variante ?? "";
-        suggested = getSuggestedPriceFromPricesObj(vOrNull?.precios_por_cantidad) || "";
-      }else{
-        suggested = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
-      }
-
-      return {
-        product_id: productId,
-        price: null,      // product price can be null
-        quantity: null,   // can be null
-        variations: [{
-          variation_id: variantId,
-          price: safeTrim(suggested) === "" ? null : suggested,
-          quantity: 1
-        }],
-        _meta: { product_name: productName, variant_name: variantName }
-      };
-    }
-
-    function renderProducts(){
-      const wrap = el("products");
-      wrap.innerHTML = "";
-
-      if(state.products.length === 0){
-        wrap.innerHTML = `<div class="hint">Aún no has agregado productos. Usa “Agregar al pedido”.</div>`;
-        refreshJsonPreview();
-        return;
-      }
-
-      state.products.forEach((p, idx) => {
-        const titleName = safeTrim(p?._meta?.product_name) || `Producto #${idx+1}`;
-        const subName = safeTrim(p?._meta?.variant_name);
-        const subtitle = subName ? `${subName}` : "Sin variante";
-
-        const card = document.createElement("div");
-        card.className = "product";
-
-        card.innerHTML = `
-          <div class="product-head">
-            <div>
-              <div class="product-title">${escapeHtml(titleName)}</div>
-              <div class="mini">${escapeHtml(subtitle)}<br/>Puedes ajustar price/quantity. Si dejas price vacío, se envía null.</div>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <button class="btn btn-danger" type="button" data-remove-product="${idx}">Quitar</button>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label>product_id</label>
-              <input readonly value="${escapeHtml(p.product_id)}" />
-              <div class="hint">Bloqueado (proviene del catálogo)</div>
-            </div>
-            <div class="field">
-              <label>price (vacío = null)</label>
-              <input placeholder="(vacío envía null)" value="${p.price === null ? "" : escapeHtml(String(p.price))}" data-p-field="price" data-p-idx="${idx}" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label>quantity (vacío = null)</label>
-              <input type="number" step="1" placeholder="(vacío envía null)" value="${p.quantity === null ? "" : escapeHtml(String(p.quantity))}" data-p-field="quantity" data-p-idx="${idx}" />
-            </div>
-            <div class="field">
-              <label style="opacity:0;">.</label>
-              <div class="hint">Deja vacío para enviar null.</div>
-            </div>
-          </div>
-
-          <div class="variations" id="vars-${idx}"></div>
-        `;
-
-        wrap.appendChild(card);
-
-        const varsWrap = card.querySelector(`#vars-${idx}`);
-        (p.variations || []).forEach((v, vIdx) => {
-          const vBox = document.createElement("div");
-          vBox.className = "variation";
-          vBox.innerHTML = `
-            <div class="variation-head">
-              <div style="font-weight:950; font-size:12px;">Variación</div>
-              <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar variación</button>
-            </div>
-
-            <div class="row">
-              <div class="field">
-                <label>variation_id</label>
-                <input readonly value="${escapeHtml(v.variation_id)}" />
-                <div class="hint">Bloqueado (proviene del catálogo)</div>
-              </div>
-              <div class="field">
-                <label>price (vacío = null)</label>
-                <input placeholder="(vacío envía null)" value="${v.price === null ? "" : escapeHtml(String(v.price))}"
-                  data-v-field="price" data-p-idx="${idx}" data-v-idx="${vIdx}" />
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="field">
-                <label>quantity (number)</label>
-                <input type="number" step="1" placeholder="1" value="${escapeHtml(String(v.quantity ?? 1))}"
-                  data-v-field="quantity" data-p-idx="${idx}" data-v-idx="${vIdx}" />
-              </div>
-              <div class="field">
-                <label style="opacity:0;">.</label>
-                <div class="hint">Por defecto: 1</div>
-              </div>
-            </div>
-          `;
-          varsWrap.appendChild(vBox);
-        });
-      });
-
-      bindDynamicEvents();
-      refreshJsonPreview();
-    }
-
-    function bindDynamicEvents(){
-      document.querySelectorAll("[data-p-field]").forEach(inp => {
-        inp.oninput = () => {
-          const pIdx = Number(inp.getAttribute("data-p-idx"));
-          const field = inp.getAttribute("data-p-field");
-          if(!state.products[pIdx]) return;
-
-          const raw = inp.value;
-
-          if(field === "price"){
-            state.products[pIdx].price = (safeTrim(raw) === "") ? null : raw;
-          }
-          if(field === "quantity"){
-            state.products[pIdx].quantity = (safeTrim(raw) === "") ? null : asInt(raw, 0);
-          }
-
-          refreshJsonPreview();
-        };
-      });
-
-      document.querySelectorAll("[data-v-field]").forEach(inp => {
-        inp.oninput = () => {
-          const pIdx = Number(inp.getAttribute("data-p-idx"));
-          const vIdx = Number(inp.getAttribute("data-v-idx"));
-          const field = inp.getAttribute("data-v-field");
-          const raw = inp.value;
-
-          const p = state.products[pIdx];
-          if(!p || !p.variations[vIdx]) return;
-
-          if(field === "price") p.variations[vIdx].price = (safeTrim(raw) === "") ? null : raw;
-          if(field === "quantity") p.variations[vIdx].quantity = asInt(raw, 1);
-
-          refreshJsonPreview();
-        };
-      });
-
-      document.querySelectorAll("[data-remove-product]").forEach(btn => {
-        btn.onclick = () => {
-          const idx = Number(btn.getAttribute("data-remove-product"));
-          state.products.splice(idx, 1);
-          renderProducts();
-        };
-      });
-
-      document.querySelectorAll("[data-remove-variation]").forEach(btn => {
-        btn.onclick = () => {
-          const pIdx = Number(btn.getAttribute("data-remove-variation"));
-          const vIdx = Number(btn.getAttribute("data-v-idx"));
-          const p = state.products[pIdx];
-          if(!p) return;
-          p.variations.splice(vIdx, 1);
-          // keep at least one variation object (API expects variations array)
-          if(p.variations.length === 0){
-            p.variations.push({ variation_id:"", price:null, quantity:1 });
-          }
-          renderProducts();
-        };
-      });
-    }
-
-    function buildOrderPayload(){
-      const name = safeTrim(el("name").value);
-      const surname = safeTrim(el("surname").value);
-
-      return {
-        shopify_order_id: safeTrim(el("shopify_order_id").value),
-        discount: safeTrim(el("discount").value) || "0",
-        ctwa: safeTrim(el("ctwa").value),
-        name,
-        surname,
-        fullname: safeTrim(el("fullname").value),
-        total: asNumber(el("total").value, 0),
-        document: safeTrim(el("document").value),
-        client_email: safeTrim(el("client_email").value),
-        phone: safeTrim(el("phone").value),
-        dir: safeTrim(el("dir").value),
-        city: safeTrim(el("city").value),
-        state: safeTrim(el("state").value),
-
-        products: state.products.map(p => ({
-          product_id: safeTrim(p.product_id),
-          price: (p.price === null || safeTrim(p.price) === "") ? null : p.price,
-          variations: (p.variations || []).map(v => ({
-            variation_id: safeTrim(v.variation_id),
-            price: (v.price === null || safeTrim(v.price) === "") ? null : v.price,
-            quantity: asInt(v.quantity, 1)
-          })),
-          quantity: (p.quantity === null || safeTrim(String(p.quantity)) === "") ? null : asInt(p.quantity, 0)
-        })),
-
-        references: safeTrim(el("references").value),
-        rate_type: asInt(el("rate_type").value, 0),
-        notes: safeTrim(el("notes").value),
-        source: safeTrim(el("source").value),
-        lucidbot_inbox: safeTrim(el("lucidbot_inbox").value),
-        ad: safeTrim(el("ad").value)
-      };
-    }
-
-    function refreshJsonPreview(){
-      const payload = buildOrderPayload();
-      el("jsonBox").textContent = JSON.stringify(payload, null, 2);
     }
 
     async function loadCatalog(){
@@ -1047,11 +737,16 @@
           return;
         }
 
-        if(typeof body === "string" || body?.value === undefined){
-          throw new Error("La respuesta no tiene la propiedad 'value' en JSON.");
+        // Extract only value
+        let value = (typeof body === "string") ? null : body.value;
+
+        if(value === undefined){
+          // if body is string or different shape
+          throw new Error("La respuesta no tiene la propiedad 'value'.");
         }
 
-        const catalogObj = normalizeCatalogValue(body.value);
+        const catalogObj = normalizeCatalogValue(value);
+        state.catalogRaw = catalogObj;
         state.catalogProducts = Array.isArray(catalogObj.catalogo_de_productos) ? catalogObj.catalogo_de_productos : [];
 
         fillCatalogProductSelect();
@@ -1063,6 +758,380 @@
       }
     }
 
+    function setCatalogControlsEnabled(enabled){
+      el("catalogProductSelect").disabled = !enabled;
+      el("catalogVariantSelect").disabled = !enabled;
+      el("addFromCatalogBtn").disabled = !enabled;
+      if(!enabled){
+        el("catalogProductSelect").innerHTML = `<option value="">(Carga el catálogo)</option>`;
+        el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("selectedProductId").value = "";
+        el("selectedVariantId").value = "";
+        el("suggestedPrice").value = "";
+        state.selectedCatalogProductIdx = -1;
+        state.selectedCatalogVariantIdx = -1;
+      }
+    }
+
+    function fillCatalogProductSelect(){
+      const sel = el("catalogProductSelect");
+      sel.innerHTML = `<option value="">(Selecciona un producto)</option>`;
+
+      state.catalogProducts.forEach((p, idx) => {
+        const name = p?.nombre_del_producto ?? `Producto ${idx+1}`;
+        const id = p?.ids_integracion?.lucidsales_product_id ?? "";
+        const opt = document.createElement("option");
+        opt.value = String(idx);
+        opt.textContent = id ? `${name} — ${id}` : name;
+        sel.appendChild(opt);
+      });
+
+      // reset dependent
+      el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+      el("selectedProductId").value = "";
+      el("selectedVariantId").value = "";
+      el("suggestedPrice").value = "";
+      state.selectedCatalogProductIdx = -1;
+      state.selectedCatalogVariantIdx = -1;
+    }
+
+    function fillCatalogVariantSelect(productIdx){
+      const sel = el("catalogVariantSelect");
+      sel.innerHTML = "";
+
+      const p = state.catalogProducts[productIdx];
+      const variants = Array.isArray(p?.variantes) ? p.variantes : [];
+
+      if(variants.length === 0){
+        // Product without variants
+        sel.innerHTML = `<option value="__none__">(Sin variante)</option>`;
+        state.selectedCatalogVariantIdx = -1;
+        el("selectedVariantId").value = "";
+        // suggested price from product-level precios_por_cantidad
+        el("suggestedPrice").value = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
+        return;
+      }
+
+      sel.appendChild(new Option("(Selecciona una variante)", ""));
+      variants.forEach((v, vIdx) => {
+        const vName = v?.nombre_de_la_variante ?? `Variante ${vIdx+1}`;
+        const vId = v?.lucidsales_variant_id ?? "";
+        const color = safeTrim(v?.color);
+        const label = [vName, color ? `(${color})` : "", vId ? `— ${vId}` : ""].filter(Boolean).join(" ");
+        const opt = document.createElement("option");
+        opt.value = String(vIdx);
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+
+      state.selectedCatalogVariantIdx = -1;
+      el("selectedVariantId").value = "";
+      el("suggestedPrice").value = "";
+    }
+
+    function updateSelectedCatalogInfo(){
+      const pIdxStr = el("catalogProductSelect").value;
+      const pIdx = pIdxStr === "" ? -1 : Number(pIdxStr);
+
+      state.selectedCatalogProductIdx = pIdx;
+
+      if(pIdx < 0){
+        el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("selectedProductId").value = "";
+        el("selectedVariantId").value = "";
+        el("suggestedPrice").value = "";
+        state.selectedCatalogVariantIdx = -1;
+        return;
+      }
+
+      const p = state.catalogProducts[pIdx];
+      const productId = p?.ids_integracion?.lucidsales_product_id ?? "";
+      el("selectedProductId").value = productId;
+
+      fillCatalogVariantSelect(pIdx);
+    }
+
+    function updateSelectedVariantInfo(){
+      const pIdx = state.selectedCatalogProductIdx;
+      if(pIdx < 0) return;
+
+      const p = state.catalogProducts[pIdx];
+      const variants = Array.isArray(p?.variantes) ? p.variantes : [];
+
+      const vVal = el("catalogVariantSelect").value;
+
+      if(vVal === "__none__"){
+        // no variant
+        state.selectedCatalogVariantIdx = -1;
+        el("selectedVariantId").value = "";
+        el("suggestedPrice").value = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
+        return;
+      }
+
+      if(vVal === ""){
+        state.selectedCatalogVariantIdx = -1;
+        el("selectedVariantId").value = "";
+        el("suggestedPrice").value = "";
+        return;
+      }
+
+      const vIdx = Number(vVal);
+      state.selectedCatalogVariantIdx = vIdx;
+      const v = variants[vIdx];
+      el("selectedVariantId").value = v?.lucidsales_variant_id ?? "";
+      el("suggestedPrice").value = getSuggestedPriceFromPricesObj(v?.precios_por_cantidad) || "";
+    }
+
+    function makeEmptyProduct(){
+      return {
+        product_id: "",
+        price: null,
+        quantity: null,
+        variations: [{ variation_id: "", price: null, quantity: 1 }],
+        _meta: { product_name: "", variant_name: "" }
+      };
+    }
+
+    function makeProductFromCatalog(p, vOrNull){
+      const productId = p?.ids_integracion?.lucidsales_product_id ?? "";
+      const productName = p?.nombre_del_producto ?? "";
+      let variantId = "";
+      let variantName = "";
+      let suggested = "";
+
+      if(vOrNull){
+        variantId = vOrNull?.lucidsales_variant_id ?? "";
+        variantName = vOrNull?.nombre_de_la_variante ?? "";
+        suggested = getSuggestedPriceFromPricesObj(vOrNull?.precios_por_cantidad) || "";
+      }else{
+        suggested = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
+      }
+
+      return {
+        product_id: productId,
+        price: null,             // product-level price can be null
+        quantity: null,          // can be null
+        variations: [{
+          variation_id: variantId,
+          price: safeTrim(suggested) === "" ? null : suggested,  // if empty -> null
+          quantity: 1
+        }],
+        _meta: { product_name: productName, variant_name: variantName }
+      };
+    }
+
+    function renderProducts(){
+      const wrap = el("products");
+      wrap.innerHTML = "";
+
+      state.products.forEach((p, idx) => {
+        const titleName = safeTrim(p?._meta?.product_name) || `Producto #${idx+1}`;
+        const subName = safeTrim(p?._meta?.variant_name);
+        const subtitle = subName ? `${subName}` : "";
+
+        const card = document.createElement("div");
+        card.className = "product";
+
+        card.innerHTML = `
+          <div class="product-head">
+            <div>
+              <div class="product-title">${escapeHtml(titleName)}</div>
+              <div class="mini">${escapeHtml(subtitle)}<br/>Schema: product_id, price(null), quantity(null), variations[]</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-soft" type="button" data-add-variation="${idx}">+ Variación</button>
+              <button class="btn btn-danger" type="button" data-remove-product="${idx}">Quitar</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>product_id</label>
+              <input placeholder="ls-prod-xxxx" value="${escapeHtml(p.product_id)}" data-p-field="product_id" data-p-idx="${idx}" />
+            </div>
+            <div class="field">
+              <label>price (vacío = null)</label>
+              <input placeholder="(vacío envía null)" value="${p.price === null ? "" : escapeHtml(String(p.price))}" data-p-field="price" data-p-idx="${idx}" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>quantity (vacío = null)</label>
+              <input type="number" step="1" placeholder="(vacío envía null)" value="${p.quantity === null ? "" : escapeHtml(String(p.quantity))}" data-p-field="quantity" data-p-idx="${idx}" />
+            </div>
+            <div class="field">
+              <label style="opacity:0;">.</label>
+              <div class="hint">Tip: si dejas vacío, se envía <span class="mono">null</span>.</div>
+            </div>
+          </div>
+
+          <div class="variations" id="vars-${idx}"></div>
+        `;
+
+        wrap.appendChild(card);
+
+        const varsWrap = card.querySelector(`#vars-${idx}`);
+        (p.variations || []).forEach((v, vIdx) => {
+          const vBox = document.createElement("div");
+          vBox.className = "variation";
+          vBox.innerHTML = `
+            <div class="variation-head">
+              <div style="font-weight:950; font-size:12px;">Variación #${vIdx + 1}</div>
+              <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar</button>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>variation_id</label>
+                <input placeholder="ls-var-xxxx" value="${escapeHtml(v.variation_id)}"
+                  data-v-field="variation_id" data-p-idx="${idx}" data-v-idx="${vIdx}" />
+              </div>
+              <div class="field">
+                <label>price (vacío = null)</label>
+                <input placeholder="(vacío envía null)" value="${v.price === null ? "" : escapeHtml(String(v.price))}"
+                  data-v-field="price" data-p-idx="${idx}" data-v-idx="${vIdx}" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>quantity (number)</label>
+                <input type="number" step="1" placeholder="0" value="${escapeHtml(String(v.quantity ?? 0))}"
+                  data-v-field="quantity" data-p-idx="${idx}" data-v-idx="${vIdx}" />
+              </div>
+              <div class="field">
+                <label style="opacity:0;">.</label>
+                <div class="hint">quantity por defecto: 1 al agregar desde catálogo.</div>
+              </div>
+            </div>
+          `;
+          varsWrap.appendChild(vBox);
+        });
+      });
+
+      bindDynamicEvents();
+      refreshJsonPreview();
+    }
+
+    function bindDynamicEvents(){
+      document.querySelectorAll("[data-p-field]").forEach(inp => {
+        inp.oninput = () => {
+          const pIdx = Number(inp.getAttribute("data-p-idx"));
+          const field = inp.getAttribute("data-p-field");
+          if(!state.products[pIdx]) return;
+
+          const raw = inp.value;
+
+          if(field === "product_id"){
+            state.products[pIdx].product_id = raw;
+          } else if(field === "price"){
+            state.products[pIdx].price = (safeTrim(raw) === "") ? null : raw;
+          } else if(field === "quantity"){
+            state.products[pIdx].quantity = (safeTrim(raw) === "") ? null : asInt(raw, 0);
+          }
+          refreshJsonPreview();
+        };
+      });
+
+      document.querySelectorAll("[data-v-field]").forEach(inp => {
+        inp.oninput = () => {
+          const pIdx = Number(inp.getAttribute("data-p-idx"));
+          const vIdx = Number(inp.getAttribute("data-v-idx"));
+          const field = inp.getAttribute("data-v-field");
+          const raw = inp.value;
+
+          const p = state.products[pIdx];
+          if(!p || !p.variations[vIdx]) return;
+
+          if(field === "variation_id") p.variations[vIdx].variation_id = raw;
+          if(field === "price") p.variations[vIdx].price = (safeTrim(raw) === "") ? null : raw;
+          if(field === "quantity") p.variations[vIdx].quantity = asInt(raw, 0);
+
+          refreshJsonPreview();
+        };
+      });
+
+      document.querySelectorAll("[data-remove-product]").forEach(btn => {
+        btn.onclick = () => {
+          const idx = Number(btn.getAttribute("data-remove-product"));
+          state.products.splice(idx, 1);
+          if(state.products.length === 0){
+            state.products.push(makeEmptyProduct());
+          }
+          renderProducts();
+        };
+      });
+
+      document.querySelectorAll("[data-add-variation]").forEach(btn => {
+        btn.onclick = () => {
+          const idx = Number(btn.getAttribute("data-add-variation"));
+          const p = state.products[idx];
+          if(!p) return;
+          p.variations.push({ variation_id:"", price:null, quantity:1 });
+          renderProducts();
+        };
+      });
+
+      document.querySelectorAll("[data-remove-variation]").forEach(btn => {
+        btn.onclick = () => {
+          const pIdx = Number(btn.getAttribute("data-remove-variation"));
+          const vIdx = Number(btn.getAttribute("data-v-idx"));
+          const p = state.products[pIdx];
+          if(!p) return;
+          p.variations.splice(vIdx, 1);
+          if(p.variations.length === 0){
+            p.variations.push({ variation_id:"", price:null, quantity:1 });
+          }
+          renderProducts();
+        };
+      });
+    }
+
+    function buildOrderPayload(){
+      const name = safeTrim(el("name").value);
+      const surname = safeTrim(el("surname").value);
+
+      return {
+        shopify_order_id: safeTrim(el("shopify_order_id").value),
+        discount: safeTrim(el("discount").value) || "0",
+        ctwa: safeTrim(el("ctwa").value),
+        name,
+        surname,
+        fullname: safeTrim(el("fullname").value),
+        total: asNumber(el("total").value, 0),
+        document: safeTrim(el("document").value),
+        client_email: safeTrim(el("client_email").value),
+        phone: safeTrim(el("phone").value),
+        dir: safeTrim(el("dir").value),
+        city: safeTrim(el("city").value),
+        state: safeTrim(el("state").value),
+
+        products: state.products.map(p => ({
+          product_id: safeTrim(p.product_id),
+          price: (p.price === null || safeTrim(p.price) === "") ? null : p.price,
+          variations: (p.variations || []).map(v => ({
+            variation_id: safeTrim(v.variation_id),
+            price: (v.price === null || safeTrim(v.price) === "") ? null : v.price,
+            quantity: asInt(v.quantity, 0)
+          })),
+          quantity: (p.quantity === null || safeTrim(String(p.quantity)) === "") ? null : asInt(p.quantity, 0)
+        })),
+
+        references: safeTrim(el("references").value),
+        rate_type: asInt(el("rate_type").value, 0),
+        notes: safeTrim(el("notes").value),
+        source: safeTrim(el("source").value),
+        lucidbot_inbox: safeTrim(el("lucidbot_inbox").value),
+        ad: safeTrim(el("ad").value)
+      };
+    }
+
+    function refreshJsonPreview(){
+      const payload = buildOrderPayload();
+      el("jsonBox").textContent = JSON.stringify(payload, null, 2);
+    }
+
     async function sendOrder(){
       refreshJsonPreview();
 
@@ -1070,12 +1139,6 @@
       if(!apiKey){
         setStatus("bad", "Falta el API Key.");
         el("respBox").textContent = "Debes ingresar el API Key para enviar el pedido.";
-        return;
-      }
-
-      if(state.products.length === 0){
-        setStatus("bad", "Agrega al menos 1 producto del catálogo.");
-        el("respBox").textContent = "No hay productos en el pedido. Usa “Agregar al pedido”.";
         return;
       }
 
@@ -1131,16 +1194,19 @@
       let v = null;
       const vSel = el("catalogVariantSelect").value;
       if(vSel !== "" && vSel !== "__none__" && variants.length){
-        v = variants[Number(vSel)] || null;
+        const vIdx = Number(vSel);
+        v = variants[vIdx] || null;
       }
 
-      state.products.push(makeProductFromCatalog(p, v));
+      const item = makeProductFromCatalog(p, v);
+      state.products.push(item);
       renderProducts();
+      refreshJsonPreview();
     }
 
     function init(){
-      // NO default product. Only from catalog.
-      state.products = [];
+      // start with 1 empty product to avoid empty array
+      state.products = [ makeEmptyProduct() ];
       renderProducts();
 
       el("loadCatalogBtn").onclick = loadCatalog;
@@ -1150,11 +1216,18 @@
         el("addFromCatalogBtn").disabled = (el("catalogProductSelect").value === "");
       });
 
-      el("catalogVariantSelect").addEventListener("change", updateSelectedVariantInfo);
+      el("catalogVariantSelect").addEventListener("change", () => {
+        updateSelectedVariantInfo();
+      });
 
       el("addFromCatalogBtn").onclick = () => {
         if(el("catalogProductSelect").value === "") return;
         addFromCatalogToOrder();
+      };
+
+      el("addEmptyProductBtn").onclick = () => {
+        state.products.push(makeEmptyProduct());
+        renderProducts();
       };
 
       el("sendBtn").onclick = sendOrder;

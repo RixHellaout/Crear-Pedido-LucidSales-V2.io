@@ -307,7 +307,7 @@
         <div class="dot" aria-hidden="true"></div>
         <div>
           <div>Crear Pedido (PC)</div>
-          <div class="sub">Carga productos, arma el pedido y envía</div>
+          <div class="sub">Carga productos, elige correctamente y envía</div>
         </div>
       </div>
       <div class="pill"><span class="swatch" aria-hidden="true"></span> Blanco + Azul</div>
@@ -322,8 +322,8 @@
           <div>
             <h2 class="card-title">Pedido + Productos</h2>
             <p class="card-desc">
-              Agrega productos desde el listado. La variante es opcional.
-              En el JSON se envían los IDs (product_id / variation_id).
+              Si un producto tiene variantes, debes elegir una variante (no se puede elegir el producto “general”).
+              Si no tiene variantes, funciona como siempre.
             </p>
           </div>
         </div>
@@ -333,7 +333,7 @@
             <div class="field">
               <label for="apiKey">API Key</label>
               <input id="apiKey" placeholder="Pega tu api key aquí" autocomplete="off" />
-              <div class="hint">Headers: <span class="mono">Authorization</span> (pedido) y <span class="mono">X-ACCESS-TOKEN</span> (contacto).</div>
+              <div class="hint">Headers: <span class="mono">Authorization</span> (pedido y productos). Hook: va en body como <span class="mono">api_key</span>.</div>
             </div>
             <div class="field">
               <label for="shopify_order_id">shopify_order_id</label>
@@ -354,11 +354,10 @@
 
           <div class="divider"></div>
 
-          <!-- PRODUCTS GET -->
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;">
             <div>
               <div style="font-weight:950;">Productos</div>
-              <div class="mini">Cárgalos con tu API Key y selecciona un producto (variante opcional).</div>
+              <div class="mini">Cárgalos y selecciona. Si el producto tiene variantes, debes escoger una.</div>
             </div>
             <button class="btn btn-soft" type="button" id="loadProductsBtn">Cargar productos</button>
           </div>
@@ -371,10 +370,11 @@
               </select>
             </div>
             <div class="field">
-              <label for="variantSelect">Variante (opcional)</label>
+              <label for="variantSelect">Variante</label>
               <select id="variantSelect" disabled>
                 <option value="">(Selecciona un producto)</option>
               </select>
+              <div class="hint" id="variantHint">—</div>
             </div>
           </div>
 
@@ -392,13 +392,13 @@
           <div class="row">
             <div class="field">
               <label for="suggestedPrice">Precio sugerido (solo referencia)</label>
-              <input id="suggestedPrice" readonly placeholder="(Según product/variant)" />
-              <div class="hint">En el pedido, <span class="mono">price</span> va en <span class="mono">null</span> salvo que lo escribas explícitamente.</div>
+              <input id="suggestedPrice" readonly placeholder="(Según variante o producto)" />
+              <div class="hint" id="priceHint">—</div>
             </div>
             <div class="field" style="justify-content:flex-end;">
               <label style="opacity:0;">.</label>
               <button class="btn btn-primary" type="button" id="addToOrderBtn" disabled>Agregar al pedido</button>
-              <div class="hint">Si no eliges variante, se agrega sin variaciones.</div>
+              <div class="hint" id="addHint">Selecciona producto.</div>
             </div>
           </div>
 
@@ -494,14 +494,13 @@
             </div>
           </div>
 
-          <!-- ORDER PRODUCTS LIST -->
           <div style="margin-top:16px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
               <div>
                 <div style="font-weight:950;">Productos del pedido</div>
                 <div class="mini">
-                  Con variaciones: <span class="mono">quantity</span> en producto va <span class="mono">null</span>.
-                  Sin variaciones: <span class="mono">variations: []</span> y <span class="mono">quantity</span> en producto es la cantidad total.
+                  Si el producto tiene variantes: se envía <span class="mono">quantity:null</span> y la cantidad va en cada variación.
+                  Si no tiene variantes: se envía <span class="mono">variations:[]</span> y <span class="mono">quantity</span> en el producto.
                 </div>
               </div>
             </div>
@@ -522,7 +521,7 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">JSON enviado y respuestas</h2>
-            <p class="card-desc">JSON del pedido + respuesta de productos + respuesta del pedido + respuesta de contacto.</p>
+            <p class="card-desc">JSON del pedido + respuesta de productos + respuesta del pedido + respuesta del hook.</p>
           </div>
         </div>
 
@@ -536,13 +535,13 @@
           </div>
 
           <div class="small-muted" style="margin:14px 0 8px;">Respuesta productos (GET /products/)</div>
-          <div id="productsRespBox" class="codebox" style="max-height:220px;">(vacío)</div>
+          <div id="productsRespBox" class="codebox" style="max-height:210px;">(vacío)</div>
 
           <div class="small-muted" style="margin:14px 0 8px;">Respuesta pedido (POST /orders/create)</div>
-          <div id="respBox" class="codebox" style="max-height:260px;">(vacío)</div>
+          <div id="respBox" class="codebox" style="max-height:240px;">(vacío)</div>
 
-          <div class="small-muted" style="margin:14px 0 8px;">Respuesta contacto (POST /contacts)</div>
-          <div id="contactRespBox" class="codebox" style="max-height:260px;">(vacío)</div>
+          <div class="small-muted" style="margin:14px 0 8px;">Respuesta hook (POST Make)</div>
+          <div id="hookRespBox" class="codebox" style="max-height:240px;">(vacío)</div>
         </div>
       </div>
     </div>
@@ -551,15 +550,16 @@
   <script>
     const PRODUCTS_API_URL = "https://panel.lucidsales.co/b/api/v1/products/";
     const ORDER_API_URL    = "https://panel.lucidsales.co/b/api/v1/orders/create";
-    const CONTACT_API_URL  = "https://panel.lucidbot.co/api/contacts";
+    const MAKE_HOOK_URL    = "https://hook.us2.make.com/bv1dxuxzes2wbdy5qp2o75ojwbi461fz";
 
     const el = (id) => document.getElementById(id);
 
     const state = {
-      orderProducts: [],   // items for order payload (ids)
-      apiProducts: [],     // normalized list from GET
+      orderProducts: [],
+      apiProducts: [],
       selectedProductIdx: -1,
-      selectedVariantIdx: -1
+      selectedVariantIdx: -1,
+      selectedProductHasVariants: false
     };
 
     function safeTrim(v){ return (v ?? "").toString().trim(); }
@@ -622,15 +622,19 @@
     function setProductsControlsEnabled(enabled){
       el("productSelect").disabled = !enabled;
       el("variantSelect").disabled = !enabled;
-      el("addToOrderBtn").disabled = !enabled;
+      el("addToOrderBtn").disabled = true;
       if(!enabled){
         el("productSelect").innerHTML = `<option value="">(Carga los productos)</option>`;
         el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("variantHint").textContent = "—";
+        el("priceHint").textContent = "—";
+        el("addHint").textContent = "Selecciona producto.";
         el("selectedProductId").value = "";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
         state.selectedProductIdx = -1;
         state.selectedVariantIdx = -1;
+        state.selectedProductHasVariants = false;
       }
     }
 
@@ -673,11 +677,16 @@
       });
 
       el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+      el("variantHint").textContent = "—";
+      el("priceHint").textContent = "—";
+      el("addHint").textContent = "Selecciona producto.";
       el("selectedProductId").value = "";
       el("selectedVariantId").value = "";
       el("suggestedPrice").value = "";
       state.selectedProductIdx = -1;
       state.selectedVariantIdx = -1;
+      state.selectedProductHasVariants = false;
+      el("addToOrderBtn").disabled = true;
     }
 
     function fillVariantSelect(productIdx){
@@ -686,32 +695,38 @@
 
       const p = state.apiProducts[productIdx];
       const variants = Array.isArray(p?.variants) ? p.variants : [];
+      const hasVariants = variants.length > 0;
 
-      // Variante NO obligatoria (siempre existe la opción "Sin variante")
-      sel.appendChild(new Option("(Sin variante)", "__none__"));
+      state.selectedProductHasVariants = hasVariants;
+      state.selectedVariantIdx = -1;
 
-      if(variants.length === 0){
-        // no más opciones
+      if(hasVariants){
+        sel.appendChild(new Option("(Selecciona una variante)", ""));
+        variants.forEach((v, vIdx) => {
+          const opt = document.createElement("option");
+          opt.value = String(vIdx);
+          opt.textContent = `${v.name} — ${lsVariantIdFromRawId(v.id)}`;
+          sel.appendChild(opt);
+        });
+
+        el("variantHint").textContent = "Este producto requiere seleccionar una variante.";
+        el("priceHint").textContent = "El precio se define por variante (puedes editarlo después en la variación).";
+        el("addHint").textContent = "Selecciona una variante para poder agregar.";
         el("selectedVariantId").value = "";
-        el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
-        sel.value = "__none__";
+        el("suggestedPrice").value = "";
+        el("addToOrderBtn").disabled = true;
         return;
       }
 
-      sel.appendChild(new Option("(Selecciona una variante)", ""));
-
-      variants.forEach((v, vIdx) => {
-        const opt = document.createElement("option");
-        opt.value = String(vIdx);
-        opt.textContent = `${v.name} — ${lsVariantIdFromRawId(v.id)}`;
-        sel.appendChild(opt);
-      });
-
-      // default: sin variante
+      // sin variantes
+      sel.appendChild(new Option("(Sin variantes)", "__none__"));
       sel.value = "__none__";
+      el("variantHint").textContent = "Este producto no tiene variantes.";
+      el("priceHint").textContent = "Puedes agregar el producto sin variaciones.";
+      el("addHint").textContent = "Listo para agregar.";
       el("selectedVariantId").value = "";
       el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
-      state.selectedVariantIdx = -1;
+      el("addToOrderBtn").disabled = false;
     }
 
     function updateSelectedProduct(){
@@ -722,10 +737,15 @@
 
       if(pIdx < 0){
         el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("variantHint").textContent = "—";
+        el("priceHint").textContent = "—";
+        el("addHint").textContent = "Selecciona producto.";
         el("selectedProductId").value = "";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
         state.selectedVariantIdx = -1;
+        state.selectedProductHasVariants = false;
+        el("addToOrderBtn").disabled = true;
         return;
       }
 
@@ -742,17 +762,20 @@
       const variants = Array.isArray(p?.variants) ? p.variants : [];
       const vVal = el("variantSelect").value;
 
-      if(vVal === "__none__"){
-        state.selectedVariantIdx = -1;
+      if(!state.selectedProductHasVariants){
+        // sin variantes: siempre listo
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
+        el("addToOrderBtn").disabled = false;
         return;
       }
 
+      // con variantes: obligatorio seleccionar
       if(vVal === ""){
         state.selectedVariantIdx = -1;
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
+        el("addToOrderBtn").disabled = true;
         return;
       }
 
@@ -762,27 +785,29 @@
 
       el("selectedVariantId").value = lsVariantIdFromRawId(v?.id);
       el("suggestedPrice").value = (typeof v?.price === "number") ? String(v.price) : "";
+      el("addToOrderBtn").disabled = false;
     }
 
     function makeOrderItemFromSelection(p, vOrNull){
       const productId = lsProductIdFromNumericId(p?.id);
       const productName = p?.name ?? "";
 
-      // Regla: price null salvo que el usuario lo escriba explícitamente después
+      // Si tiene variantes, NO permitimos agregar sin variante (ya bloqueado por UI)
       if(vOrNull){
         return {
           product_id: productId,
-          price: null,
-          quantity: null,
+          price: null,        // no se setea aquí
+          quantity: null,     // con variantes siempre null
           variations: [{
-            variation_id: lsVariantIdFromRawId(vOrNull?.id), // <-- ID (no nombre)
-            price: null,
+            variation_id: lsVariantIdFromRawId(vOrNull?.id),
+            price: null,      // solo editable en la variación
             quantity: 1
           }],
           _meta: { product_name: productName, variant_name: vOrNull?.name ?? "" }
         };
       }
 
+      // sin variantes
       return {
         product_id: productId,
         price: null,
@@ -811,11 +836,16 @@
         const card = document.createElement("div");
         card.className = "product";
 
+        // regla: si tiene variantes, NO se puede poner price a nivel producto
+        const productPriceDisabled = hasVars ? "readonly" : "";
+        const productPricePlaceholder = hasVars ? "(bloqueado: precio por variación)" : "(vacío envía null)";
+        const productPriceValue = (p.price === null ? "" : String(p.price));
+
         card.innerHTML = `
           <div class="product-head">
             <div>
               <div class="product-title">${escapeHtml(titleName)}</div>
-              <div class="mini">${escapeHtml(subtitle)}<br/>Puedes ajustar price/quantity. Si dejas price vacío, se envía null.</div>
+              <div class="mini">${escapeHtml(subtitle)}<br/>${hasVars ? "Precio solo en variaciones." : "Puedes ajustar price/quantity. price vacío = null."}</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <button class="btn btn-danger" type="button" data-remove-item="${idx}">Quitar</button>
@@ -828,8 +858,11 @@
               <input readonly value="${escapeHtml(p.product_id)}" />
             </div>
             <div class="field">
-              <label>price (vacío = null)</label>
-              <input placeholder="(vacío envía null)" value="${p.price === null ? "" : escapeHtml(String(p.price))}" data-item-field="price" data-idx="${idx}" />
+              <label>price (producto)</label>
+              <input ${productPriceDisabled} placeholder="${escapeHtml(productPricePlaceholder)}"
+                value="${escapeHtml(hasVars ? "" : productPriceValue)}"
+                data-item-field="price" data-idx="${idx}" />
+              <div class="hint">${hasVars ? "No se envía price en producto si hay variaciones (permanece null)." : "Deja vacío para null."}</div>
             </div>
           </div>
 
@@ -838,11 +871,10 @@
               <label>quantity ${hasVars ? "(se envía null)" : "(sin variaciones)"}</label>
               <input ${hasVars ? "readonly" : 'type="text"'} placeholder="${hasVars ? "(se envía null)" : "1 (o 2x)"}"
                 value="${hasVars ? "" : escapeHtml(String(p.quantity ?? 1))}" data-item-field="quantity" data-idx="${idx}" />
-              <div class="hint">${hasVars ? "La cantidad va dentro de cada variación." : "Puedes escribir 2x y toma el 2."}</div>
             </div>
             <div class="field">
               <label style="opacity:0;">.</label>
-              <div class="hint">${hasVars ? "Variations se envía con IDs." : "Variations se envía como []"}</div>
+              <div class="hint">${hasVars ? "La cantidad va en cada variación." : "Variations se envía como []"}</div>
             </div>
           </div>
 
@@ -868,9 +900,10 @@
                   <input readonly value="${escapeHtml(v.variation_id)}" />
                 </div>
                 <div class="field">
-                  <label>price (vacío = null)</label>
+                  <label>price (variación) (vacío = null)</label>
                   <input placeholder="(vacío envía null)" value="${v.price === null ? "" : escapeHtml(String(v.price))}"
                     data-var-field="price" data-idx="${idx}" data-v-idx="${vIdx}" />
+                  <div class="hint">Aquí sí puedes poner precio.</div>
                 </div>
               </div>
 
@@ -910,11 +943,18 @@
           const hasVars = Array.isArray(item.variations) && item.variations.length > 0;
 
           if(field === "price"){
-            item.price = (safeTrim(raw) === "") ? null : raw;
+            if(hasVars){
+              item.price = null; // bloqueado
+              inp.value = "";
+            }else{
+              item.price = (safeTrim(raw) === "") ? null : raw;
+            }
           }
+
           if(field === "quantity"){
             if(hasVars){
               item.quantity = null;
+              inp.value = "";
             }else{
               item.quantity = parseQtyBeforeX(raw, 1);
             }
@@ -961,7 +1001,7 @@
 
           item.variations.splice(vIdx, 1);
 
-          // si queda sin variaciones, se convierte en "sin variaciones"
+          // si por alguna razón queda sin variaciones, lo dejamos inválido (pero evitamos romper)
           if(item.variations.length === 0){
             item.quantity = 1;
           }else{
@@ -997,10 +1037,10 @@
 
           return {
             product_id: safeTrim(p.product_id),
-            price: (p.price === null || safeTrim(p.price) === "") ? null : p.price,
+            price: hasVars ? null : ((p.price === null || safeTrim(p.price) === "") ? null : p.price),
             quantity: hasVars ? null : parseQtyBeforeX(p.quantity, 1),
             variations: hasVars ? (p.variations || []).map(v => ({
-              variation_id: safeTrim(v.variation_id), // <-- ID
+              variation_id: safeTrim(v.variation_id),
               price: (v.price === null || safeTrim(v.price) === "") ? null : v.price,
               quantity: parseQtyBeforeX(v.quantity, 1)
             })) : []
@@ -1017,7 +1057,6 @@
     }
 
     function buildProductsOrderedText(){
-      // "N x Nombre de Producto" (agrupado por nombre exacto)
       const map = new Map();
 
       for(const item of (state.orderProducts || [])){
@@ -1040,31 +1079,23 @@
       for(const [name, qty] of map.entries()){
         parts.push(`${qty} x ${name}`);
       }
-
       return parts.join(", ");
     }
 
-    function buildContactPayload(){
-      const phone = safeTrim(el("phone").value);
-      const firstName = safeTrim(el("name").value);
-      const lastName = safeTrim(el("surname").value);
-
-      const productosOrdenados = buildProductsOrderedText();
-      const totalPagar = safeTrim(el("total").value) || "0";
-      const ciudad = safeTrim(el("city").value);
-      const provincia = safeTrim(el("state").value);
-      const direccion = safeTrim(el("dir").value);
+    function buildHookPayload(){
+      const apiKey = safeTrim(el("apiKey").value);
 
       return {
-        phone,
-        first_name: firstName,
-        last_name: lastName,
+        phone: safeTrim(el("phone").value),
+        api_key: apiKey,
+        first_name: safeTrim(el("name").value),
+        last_name: safeTrim(el("surname").value),
         actions: [
-          { action: "set_field_value", field_name: "Producto_Ordenados", value: productosOrdenados },
-          { action: "set_field_value", field_name: "Total a Pagar", value: totalPagar },
-          { action: "set_field_value", field_name: "Ciudad", value: ciudad },
-          { action: "set_field_value", field_name: "Provincia", value: provincia },
-          { action: "set_field_value", field_name: "Direccion_1", value: direccion }
+          { action: "set_field_value", field_name: "Producto_Ordenados", value: buildProductsOrderedText() },
+          { action: "set_field_value", field_name: "Total a Pagar", value: safeTrim(el("total").value) || "0" },
+          { action: "set_field_value", field_name: "Ciudad", value: safeTrim(el("city").value) },
+          { action: "set_field_value", field_name: "Provincia", value: safeTrim(el("state").value) },
+          { action: "set_field_value", field_name: "Direccion_1", value: safeTrim(el("dir").value) }
         ]
       };
     }
@@ -1132,16 +1163,18 @@
 
       const p = state.apiProducts[pIdx];
       const variants = Array.isArray(p?.variants) ? p.variants : [];
+      const hasVariants = variants.length > 0;
 
-      let v = null;
-      const vSel = el("variantSelect").value;
-
-      // Variante NO obligatoria
-      if(vSel !== "" && vSel !== "__none__" && variants.length){
-        v = variants[Number(vSel)] || null;
+      if(hasVariants){
+        const vVal = el("variantSelect").value;
+        if(vVal === "") return; // obligatorio
+        const v = variants[Number(vVal)] || null;
+        if(!v) return;
+        state.orderProducts.push(makeOrderItemFromSelection(p, v));
+      }else{
+        state.orderProducts.push(makeOrderItemFromSelection(p, null));
       }
 
-      state.orderProducts.push(makeOrderItemFromSelection(p, v));
       renderOrderProducts();
     }
 
@@ -1161,11 +1194,24 @@
         return;
       }
 
+      // validación: si un item tiene variations, debe tener al menos 1 variation_id
+      for(const it of state.orderProducts){
+        const hasVars = Array.isArray(it.variations) && it.variations.length > 0;
+        if(hasVars){
+          const ok = it.variations.every(v => safeTrim(v.variation_id) !== "");
+          if(!ok){
+            setStatus("bad", "Hay un ítem con variación inválida.");
+            el("respBox").textContent = "Revisa: un producto con variantes debe tener variation_id.";
+            return;
+          }
+        }
+      }
+
       const payload = buildOrderPayload();
 
       setStatus("neutral", "Enviando pedido...");
       el("respBox").textContent = "(enviando pedido...)";
-      el("contactRespBox").textContent = "(pendiente)";
+      el("hookRespBox").textContent = "(pendiente)";
 
       try{
         const res = await fetch(ORDER_API_URL, {
@@ -1193,58 +1239,57 @@
           show;
 
         if(res.ok){
-          setStatus("ok", `Pedido enviado (HTTP ${res.status}). Enviando contacto...`);
+          setStatus("ok", `Pedido enviado (HTTP ${res.status}). Enviando hook...`);
 
-          // --- POST CONTACT ---
-          const contactPayload = buildContactPayload();
-          el("contactRespBox").textContent = "(enviando contacto...)";
+          // --- POST MAKE HOOK ---
+          const hookPayload = buildHookPayload();
+          el("hookRespBox").textContent = "(enviando hook...)";
 
           try{
-            const cRes = await fetch(CONTACT_API_URL, {
+            const hRes = await fetch(MAKE_HOOK_URL, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "accept": "application/json",
-                "X-ACCESS-TOKEN": apiKey
+                "accept": "application/json"
               },
-              body: JSON.stringify(contactPayload)
+              body: JSON.stringify(hookPayload)
             });
 
-            const cType = cRes.headers.get("content-type") || "";
-            let cBody;
-            if(cType.includes("application/json")){
-              cBody = await cRes.json();
+            const hType = hRes.headers.get("content-type") || "";
+            let hBody;
+            if(hType.includes("application/json")){
+              hBody = await hRes.json();
             }else{
-              cBody = await cRes.text();
+              hBody = await hRes.text();
             }
 
-            const cShow = (typeof cBody === "string") ? cBody : JSON.stringify(cBody, null, 2);
+            const hShow = (typeof hBody === "string") ? hBody : JSON.stringify(hBody, null, 2);
 
-            el("contactRespBox").textContent =
-              `HTTP ${cRes.status}\n` +
-              `content-type: ${cType || "(no especificado)"}\n\n` +
-              cShow;
+            el("hookRespBox").textContent =
+              `HTTP ${hRes.status}\n` +
+              `content-type: ${hType || "(no especificado)"}\n\n` +
+              hShow;
 
-            if(cRes.ok){
-              setStatus("ok", `Pedido OK + contacto OK (HTTP ${res.status} / ${cRes.status})`);
+            if(hRes.ok){
+              setStatus("ok", `Pedido OK + hook OK (HTTP ${res.status} / ${hRes.status})`);
             }else{
-              setStatus("bad", `Pedido OK, pero contacto falló (HTTP ${cRes.status})`);
+              setStatus("bad", `Pedido OK, pero hook falló (HTTP ${hRes.status})`);
             }
 
-          }catch(cErr){
-            setStatus("bad", "Pedido OK, pero error de red/CORS al enviar contacto.");
-            el("contactRespBox").textContent = String(cErr?.message || cErr);
+          }catch(hErr){
+            setStatus("bad", "Pedido OK, pero error de red/CORS al enviar hook.");
+            el("hookRespBox").textContent = String(hErr?.message || hErr);
           }
 
         } else {
           setStatus("bad", `Error al enviar pedido (HTTP ${res.status})`);
-          el("contactRespBox").textContent = "(no se envió contacto porque falló el pedido)";
+          el("hookRespBox").textContent = "(no se envió hook porque falló el pedido)";
         }
 
       }catch(err){
         setStatus("bad", "Error de red o CORS al enviar pedido.");
         el("respBox").textContent = String(err?.message || err);
-        el("contactRespBox").textContent = "(no se envió contacto)";
+        el("hookRespBox").textContent = "(no se envió hook)";
       }
     }
 
@@ -1258,13 +1303,13 @@
 
       el("productSelect").addEventListener("change", () => {
         updateSelectedProduct();
-        el("addToOrderBtn").disabled = (el("productSelect").value === "");
       });
 
-      el("variantSelect").addEventListener("change", updateSelectedVariant);
+      el("variantSelect").addEventListener("change", () => {
+        updateSelectedVariant();
+      });
 
       el("addToOrderBtn").onclick = () => {
-        if(el("productSelect").value === "") return;
         addSelectionToOrder();
       };
 

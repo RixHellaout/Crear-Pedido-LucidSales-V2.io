@@ -145,7 +145,7 @@
       color:var(--muted);
       font-weight:800;
     }
-    input, select, textarea{
+    input, select{
       width:100%;
       border:1px solid var(--border);
       border-radius: 12px;
@@ -155,14 +155,11 @@
       background:#fff;
       transition: .15s ease;
     }
-    input:focus, select:focus, textarea:focus{
+    input:focus, select:focus{
       border-color: rgba(37,99,235,.55);
       box-shadow: 0 0 0 4px rgba(37,99,235,.12);
     }
-    input[readonly]{
-      background: #f8fafc;
-      color: #334155;
-    }
+    input[readonly]{ background:#f8fafc; color:#334155; }
 
     .hint{
       margin-top:6px;
@@ -214,11 +211,7 @@
       font-weight:950;
     }
 
-    .divider{
-      height:1px;
-      background: var(--border);
-      margin: 14px 0;
-    }
+    .divider{ height:1px; background: var(--border); margin: 14px 0; }
 
     .products{
       display:flex;
@@ -238,10 +231,7 @@
       gap:10px;
       margin-bottom:10px;
     }
-    .product-title{
-      font-weight:950;
-      font-size:13px;
-    }
+    .product-title{ font-weight:950; font-size:13px; }
     .mini{
       font-size:12px;
       color:var(--muted);
@@ -308,12 +298,7 @@
     .badge.bad{ color:var(--bad); border-color: rgba(220,38,38,.28); background: rgba(220,38,38,.08); }
     .badge.neutral{ color:var(--muted); background: rgba(100,116,139,.08); border-color: rgba(100,116,139,.20); }
 
-    .small-muted{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:800;
-    }
-
+    .small-muted{ font-size:12px; color:var(--muted); font-weight:800; }
     .footnote{
       margin-top:14px;
       font-size:12px;
@@ -321,11 +306,6 @@
       font-weight:700;
       line-height:1.45;
     }
-    .kpi{
-      display:flex; gap:10px; flex-wrap:wrap;
-      margin-top:8px;
-    }
-    .kpi .pill{ font-weight:900; }
   </style>
 </head>
 <body>
@@ -335,12 +315,10 @@
         <div class="dot" aria-hidden="true"></div>
         <div>
           <div>Crear Pedido (PC)</div>
-          <div class="sub">Pedidos: POST https://panel.lucidsales.co/b/api/v1/orders/create</div>
+          <div class="sub">Pedido: POST https://panel.lucidsales.co/b/api/v1/orders/create</div>
         </div>
       </div>
-      <div class="pill" title="Tema">
-        <span class="swatch" aria-hidden="true"></span> Blanco + Azul
-      </div>
+      <div class="pill"><span class="swatch" aria-hidden="true"></span> Blanco + Azul</div>
     </div>
   </div>
 
@@ -350,27 +328,20 @@
       <div class="card">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Pedido + Catálogo</h2>
+            <h2 class="card-title">Pedido + Productos</h2>
             <p class="card-desc">
-              1) Pega el API Key<br/>
-              2) Carga el catálogo (bot field 663869) y agrega productos/variantes al pedido<br/>
-              3) Envía y mira la respuesta
+              Solo puedes añadir productos obtenidos del GET de productos.
+              No hay creación manual.
             </p>
-            <div class="kpi">
-              <span class="pill"><span class="swatch" style="background:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,.12)"></span> Catálogo: GET panel.lucidbot.co</span>
-              <span class="pill"><span class="swatch" style="background:var(--cyan)"></span> Pedido: POST panel.lucidsales.co</span>
-            </div>
           </div>
         </div>
 
         <div class="card-body">
           <div class="row">
             <div class="field">
-              <label for="apiKey">API Key (se usa para ambos llamados)</label>
+              <label for="apiKey">API Key</label>
               <input id="apiKey" placeholder="Pega tu api key aquí" autocomplete="off" />
-              <div class="hint">
-                Catálogo: header <span class="mono">X-ACCESS-TOKEN</span> • Pedido: header <span class="mono">authorization</span>
-              </div>
+              <div class="hint">Se usa en headers: <span class="mono">Authorization: {api_key}</span></div>
             </div>
             <div class="field">
               <label for="shopify_order_id">shopify_order_id</label>
@@ -391,25 +362,25 @@
 
           <div class="divider"></div>
 
-          <!-- CATALOGO -->
+          <!-- PRODUCTS GET -->
           <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;">
             <div>
-              <div style="font-weight:950;">Catálogo (bot field 663869)</div>
-              <div class="mini">Se toma SOLO <span class="mono">value</span> y de ahí se lista <span class="mono">catalogo_de_productos</span>.</div>
+              <div style="font-weight:950;">Productos (GET)</div>
+              <div class="mini">Endpoint: <span class="mono">GET https://panel.lucidsales.co/b/api/v1/products/</span></div>
             </div>
-            <button class="btn btn-soft" type="button" id="loadCatalogBtn">Cargar catálogo</button>
+            <button class="btn btn-soft" type="button" id="loadProductsBtn">Cargar productos</button>
           </div>
 
           <div class="row">
             <div class="field">
-              <label for="catalogProductSelect">Producto</label>
-              <select id="catalogProductSelect" disabled>
-                <option value="">(Carga el catálogo)</option>
+              <label for="productSelect">Producto</label>
+              <select id="productSelect" disabled>
+                <option value="">(Carga los productos)</option>
               </select>
             </div>
             <div class="field">
-              <label for="catalogVariantSelect">Variante</label>
-              <select id="catalogVariantSelect" disabled>
+              <label for="variantSelect">Variante</label>
+              <select id="variantSelect" disabled>
                 <option value="">(Selecciona un producto)</option>
               </select>
             </div>
@@ -417,25 +388,26 @@
 
           <div class="row">
             <div class="field">
-              <label for="selectedProductId">lucidsales_product_id</label>
+              <label for="selectedProductId">product_id (lucidsales)</label>
               <input id="selectedProductId" readonly placeholder="Se llena al elegir producto" />
+              <div class="hint">Se enviará como string: <span class="mono">ls-prod-xxxxx</span></div>
             </div>
             <div class="field">
-              <label for="selectedVariantId">lucidsales_variant_id</label>
+              <label for="selectedVariantId">variation_id (lucidsales)</label>
               <input id="selectedVariantId" readonly placeholder="Se llena al elegir variante" />
+              <div class="hint">Se enviará como string: <span class="mono">ls-var-xxxxx</span></div>
             </div>
           </div>
 
           <div class="row">
             <div class="field">
-              <label for="suggestedPrice">Precio sugerido (según precios_por_cantidad)</label>
-              <input id="suggestedPrice" readonly placeholder="(Si existe, se mostrará aquí)" />
-              <div class="hint">Si tu API requiere número, edítalo luego en el producto agregado (abajo).</div>
+              <label for="suggestedPrice">Precio sugerido</label>
+              <input id="suggestedPrice" readonly placeholder="(Se mostrará según product/variant)" />
             </div>
             <div class="field" style="justify-content:flex-end;">
               <label style="opacity:0;">.</label>
-              <button class="btn btn-primary" type="button" id="addFromCatalogBtn" disabled>Agregar al pedido</button>
-              <div class="hint">Agrega el producto/variante seleccionados a la lista del pedido.</div>
+              <button class="btn btn-primary" type="button" id="addToOrderBtn" disabled>Agregar al pedido</button>
+              <div class="hint">Agrega el producto/variante seleccionados al pedido.</div>
             </div>
           </div>
 
@@ -531,17 +503,18 @@
             </div>
           </div>
 
-          <!-- PRODUCTS LIST -->
+          <!-- ORDER PRODUCTS LIST -->
           <div style="margin-top:16px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
               <div>
                 <div style="font-weight:950;">Productos del pedido</div>
-                <div class="mini">Puedes ajustar IDs, cantidades y price. Si dejas price vacío, se envía <span class="mono">null</span>.</div>
+                <div class="mini">
+                  Solo se agregan desde el GET. Puedes ajustar price/quantity. Si dejas price vacío, se envía <span class="mono">null</span>.
+                </div>
               </div>
-              <button class="btn btn-ghost" type="button" id="addEmptyProductBtn">+ Producto vacío</button>
             </div>
 
-            <div id="products" class="products"></div>
+            <div id="orderProducts" class="products"></div>
           </div>
 
           <div class="btns" style="margin-top:16px;">
@@ -551,10 +524,10 @@
           </div>
 
           <div class="footnote">
-            <div><b>Pedido:</b> <span class="mono">POST https://panel.lucidsales.co/b/api/v1/orders/create</span></div>
-            <div>Header: <span class="mono">authorization: {api_key}</span> • Body: <span class="mono">application/json</span></div>
-            <div style="margin-top:6px;"><b>Catálogo:</b> <span class="mono">GET https://panel.lucidbot.co/api/accounts/bot_fields/663869</span></div>
-            <div>Header: <span class="mono">X-ACCESS-TOKEN: {api_key}</span></div>
+            <div><b>Productos:</b> <span class="mono">GET https://panel.lucidsales.co/b/api/v1/products/</span></div>
+            <div>Header: <span class="mono">Authorization: {api_key}</span></div>
+            <div style="margin-top:8px;"><b>Pedido:</b> <span class="mono">POST https://panel.lucidsales.co/b/api/v1/orders/create</span></div>
+            <div>Header: <span class="mono">Authorization: {api_key}</span> • Body: <span class="mono">application/json</span></div>
           </div>
         </div>
       </div>
@@ -564,7 +537,7 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">JSON enviado y respuestas</h2>
-            <p class="card-desc">Verás el JSON exacto del pedido + respuestas del catálogo y del API de pedidos.</p>
+            <p class="card-desc">JSON exacto del pedido + respuesta del GET productos + respuesta del POST pedido.</p>
           </div>
         </div>
 
@@ -577,10 +550,10 @@
             <div class="small-muted" id="statusText">Aún no has enviado el pedido.</div>
           </div>
 
-          <div class="small-muted" style="margin:14px 0 8px;">Respuesta del catálogo (GET bot field 663869)</div>
-          <div id="catalogRespBox" class="codebox" style="max-height:240px;">(vacío)</div>
+          <div class="small-muted" style="margin:14px 0 8px;">Respuesta productos (GET /products/)</div>
+          <div id="productsRespBox" class="codebox" style="max-height:240px;">(vacío)</div>
 
-          <div class="small-muted" style="margin:14px 0 8px;">Respuesta del pedido (POST orders/create)</div>
+          <div class="small-muted" style="margin:14px 0 8px;">Respuesta pedido (POST /orders/create)</div>
           <div id="respBox" class="codebox" style="max-height:320px;">(vacío)</div>
         </div>
       </div>
@@ -588,17 +561,16 @@
   </div>
 
   <script>
+    const PRODUCTS_API_URL = "https://panel.lucidsales.co/b/api/v1/products/";
     const ORDER_API_URL = "https://panel.lucidsales.co/b/api/v1/orders/create";
-    const BOT_FIELD_ID = 663869;
-    const CATALOG_API_URL = `https://panel.lucidbot.co/api/accounts/bot_fields/${BOT_FIELD_ID}`;
 
     const el = (id) => document.getElementById(id);
+
     const state = {
-      products: [],
-      catalogRaw: null,
-      catalogProducts: [],
-      selectedCatalogProductIdx: -1,
-      selectedCatalogVariantIdx: -1
+      orderProducts: [],   // only from GET products
+      apiProducts: [],     // normalized list from GET
+      selectedProductIdx: -1,
+      selectedVariantIdx: -1
     };
 
     function safeTrim(v){ return (v ?? "").toString().trim(); }
@@ -614,7 +586,6 @@
       const n = parseInt(t, 10);
       return Number.isFinite(n) ? n : fallback;
     }
-
     function escapeHtml(str){
       return String(str ?? "")
         .replaceAll("&","&amp;")
@@ -652,282 +623,194 @@
       state._lastComputedFullname = computed;
     }
 
-    function getSuggestedPriceFromPricesObj(pricesObj){
-      if(!pricesObj || typeof pricesObj !== "object") return "";
-      const entries = Object.entries(pricesObj);
-      if(entries.length === 0) return "";
-      // prefer keys that look like 1 unit
-      const prefer = entries.find(([k]) => k.includes("1_") || k.includes("1unidad") || k.includes("1_unidad") || k.includes("1_unidades") || k.includes("1"));
-      return (prefer ? prefer[1] : entries[0][1]) ?? "";
-    }
-
-    function normalizeCatalogValue(value){
-      // value could be:
-      // - already an object {catalogo_de_productos:[...]}
-      // - a JSON string with that object
-      // - an array directly
-      let v = value;
-
-      if(typeof v === "string"){
-        const t = v.trim();
-        // try JSON parse
-        try{
-          v = JSON.parse(t);
-        }catch(e){
-          // Sometimes it comes double-encoded; try once more after removing outer quotes if any
-          try{
-            const t2 = t.replace(/^"+|"+$/g, "");
-            v = JSON.parse(t2);
-          }catch(e2){
-            throw new Error("El campo value no es JSON válido (string).");
-          }
-        }
-      }
-
-      // If it's an array, wrap
-      if(Array.isArray(v)){
-        return { catalogo_de_productos: v };
-      }
-
-      if(v && typeof v === "object"){
-        if(Array.isArray(v.catalogo_de_productos)) return v;
-        // Some people store under other key; attempt fallback
-        if(Array.isArray(v.catalogo) ) return { catalogo_de_productos: v.catalogo };
-      }
-
-      throw new Error("El campo value no contiene catalogo_de_productos en formato esperado.");
-    }
-
-    async function loadCatalog(){
-      const apiKey = safeTrim(el("apiKey").value);
-      if(!apiKey){
-        el("catalogRespBox").textContent = "Falta el API Key.";
-        setCatalogControlsEnabled(false);
-        return;
-      }
-
-      el("catalogRespBox").textContent = "(cargando catálogo...)";
-
-      try{
-        const res = await fetch(CATALOG_API_URL, {
-          method: "GET",
-          headers: {
-            "accept": "application/json",
-            "X-ACCESS-TOKEN": apiKey
-          }
-        });
-
-        const contentType = res.headers.get("content-type") || "";
-        let body;
-        if(contentType.includes("application/json")){
-          body = await res.json();
-        }else{
-          body = await res.text();
-        }
-
-        const show = (typeof body === "string") ? body : JSON.stringify(body, null, 2);
-
-        el("catalogRespBox").textContent =
-          `HTTP ${res.status}\n` +
-          `content-type: ${contentType || "(no especificado)"}\n\n` +
-          show;
-
-        if(!res.ok){
-          setCatalogControlsEnabled(false);
-          return;
-        }
-
-        // Extract only value
-        let value = (typeof body === "string") ? null : body.value;
-
-        if(value === undefined){
-          // if body is string or different shape
-          throw new Error("La respuesta no tiene la propiedad 'value'.");
-        }
-
-        const catalogObj = normalizeCatalogValue(value);
-        state.catalogRaw = catalogObj;
-        state.catalogProducts = Array.isArray(catalogObj.catalogo_de_productos) ? catalogObj.catalogo_de_productos : [];
-
-        fillCatalogProductSelect();
-        setCatalogControlsEnabled(true);
-
-      }catch(err){
-        setCatalogControlsEnabled(false);
-        el("catalogRespBox").textContent = String(err?.message || err);
-      }
-    }
-
-    function setCatalogControlsEnabled(enabled){
-      el("catalogProductSelect").disabled = !enabled;
-      el("catalogVariantSelect").disabled = !enabled;
-      el("addFromCatalogBtn").disabled = !enabled;
+    function setProductsControlsEnabled(enabled){
+      el("productSelect").disabled = !enabled;
+      el("variantSelect").disabled = !enabled;
+      el("addToOrderBtn").disabled = !enabled;
       if(!enabled){
-        el("catalogProductSelect").innerHTML = `<option value="">(Carga el catálogo)</option>`;
-        el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("productSelect").innerHTML = `<option value="">(Carga los productos)</option>`;
+        el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
         el("selectedProductId").value = "";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
-        state.selectedCatalogProductIdx = -1;
-        state.selectedCatalogVariantIdx = -1;
+        state.selectedProductIdx = -1;
+        state.selectedVariantIdx = -1;
       }
     }
 
-    function fillCatalogProductSelect(){
-      const sel = el("catalogProductSelect");
+    function normalizeProductsResponse(body){
+      // expects: { ok:true, products:[...] }
+      if(!body || typeof body !== "object") throw new Error("Respuesta no es JSON.");
+      if(body.ok !== true) throw new Error("Respuesta ok != true.");
+      if(!Array.isArray(body.products)) throw new Error("No existe products[] en la respuesta.");
+
+      // normalize: keep id, name, price, variants[]
+      return body.products.map(p => ({
+        id: p.id,
+        name: p.name ?? "",
+        price: p.price,
+        variants: Array.isArray(p.variants) ? p.variants.map(v => ({
+          id: v.id,
+          name: v.name ?? "",
+          price: v.price
+        })) : []
+      }));
+    }
+
+    function lsProductIdFromNumericId(id){
+      // you used "ls-prod-xxxxx" before; now API returns numeric id.
+      // We'll map numeric -> "ls-prod-<zero padded 5>" to keep your order schema stable.
+      const n = Number(id);
+      if(!Number.isFinite(n)) return "";
+      return "ls-prod-" + String(n).padStart(5, "0");
+    }
+    function lsVariantIdFromRawId(id){
+      // API returns string like "gHiDIfldNnlv". We'll keep "ls-var-" prefix.
+      const t = safeTrim(id);
+      return t ? ("ls-var-" + t) : "";
+    }
+
+    function fillProductSelect(){
+      const sel = el("productSelect");
       sel.innerHTML = `<option value="">(Selecciona un producto)</option>`;
 
-      state.catalogProducts.forEach((p, idx) => {
-        const name = p?.nombre_del_producto ?? `Producto ${idx+1}`;
-        const id = p?.ids_integracion?.lucidsales_product_id ?? "";
+      state.apiProducts.forEach((p, idx) => {
         const opt = document.createElement("option");
         opt.value = String(idx);
-        opt.textContent = id ? `${name} — ${id}` : name;
+        const pid = lsProductIdFromNumericId(p.id);
+        opt.textContent = pid ? `${p.name} — ${pid}` : p.name;
         sel.appendChild(opt);
       });
 
-      // reset dependent
-      el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+      el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
       el("selectedProductId").value = "";
       el("selectedVariantId").value = "";
       el("suggestedPrice").value = "";
-      state.selectedCatalogProductIdx = -1;
-      state.selectedCatalogVariantIdx = -1;
+      state.selectedProductIdx = -1;
+      state.selectedVariantIdx = -1;
     }
 
-    function fillCatalogVariantSelect(productIdx){
-      const sel = el("catalogVariantSelect");
+    function fillVariantSelect(productIdx){
+      const sel = el("variantSelect");
       sel.innerHTML = "";
 
-      const p = state.catalogProducts[productIdx];
-      const variants = Array.isArray(p?.variantes) ? p.variantes : [];
+      const p = state.apiProducts[productIdx];
+      const variants = Array.isArray(p?.variants) ? p.variants : [];
 
       if(variants.length === 0){
-        // Product without variants
         sel.innerHTML = `<option value="__none__">(Sin variante)</option>`;
-        state.selectedCatalogVariantIdx = -1;
         el("selectedVariantId").value = "";
-        // suggested price from product-level precios_por_cantidad
-        el("suggestedPrice").value = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
+        // suggested price from product price (if number) else empty
+        el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
         return;
       }
 
       sel.appendChild(new Option("(Selecciona una variante)", ""));
       variants.forEach((v, vIdx) => {
-        const vName = v?.nombre_de_la_variante ?? `Variante ${vIdx+1}`;
-        const vId = v?.lucidsales_variant_id ?? "";
-        const color = safeTrim(v?.color);
-        const label = [vName, color ? `(${color})` : "", vId ? `— ${vId}` : ""].filter(Boolean).join(" ");
         const opt = document.createElement("option");
         opt.value = String(vIdx);
-        opt.textContent = label;
+        const vid = lsVariantIdFromRawId(v.id);
+        opt.textContent = vid ? `${v.name} — ${vid}` : v.name;
         sel.appendChild(opt);
       });
 
-      state.selectedCatalogVariantIdx = -1;
       el("selectedVariantId").value = "";
       el("suggestedPrice").value = "";
+      state.selectedVariantIdx = -1;
     }
 
-    function updateSelectedCatalogInfo(){
-      const pIdxStr = el("catalogProductSelect").value;
+    function updateSelectedProduct(){
+      const pIdxStr = el("productSelect").value;
       const pIdx = pIdxStr === "" ? -1 : Number(pIdxStr);
 
-      state.selectedCatalogProductIdx = pIdx;
+      state.selectedProductIdx = pIdx;
 
       if(pIdx < 0){
-        el("catalogVariantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
         el("selectedProductId").value = "";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
-        state.selectedCatalogVariantIdx = -1;
+        state.selectedVariantIdx = -1;
         return;
       }
 
-      const p = state.catalogProducts[pIdx];
-      const productId = p?.ids_integracion?.lucidsales_product_id ?? "";
-      el("selectedProductId").value = productId;
-
-      fillCatalogVariantSelect(pIdx);
+      const p = state.apiProducts[pIdx];
+      el("selectedProductId").value = lsProductIdFromNumericId(p.id);
+      fillVariantSelect(pIdx);
     }
 
-    function updateSelectedVariantInfo(){
-      const pIdx = state.selectedCatalogProductIdx;
+    function updateSelectedVariant(){
+      const pIdx = state.selectedProductIdx;
       if(pIdx < 0) return;
 
-      const p = state.catalogProducts[pIdx];
-      const variants = Array.isArray(p?.variantes) ? p.variantes : [];
-
-      const vVal = el("catalogVariantSelect").value;
+      const p = state.apiProducts[pIdx];
+      const variants = Array.isArray(p?.variants) ? p.variants : [];
+      const vVal = el("variantSelect").value;
 
       if(vVal === "__none__"){
-        // no variant
-        state.selectedCatalogVariantIdx = -1;
+        state.selectedVariantIdx = -1;
         el("selectedVariantId").value = "";
-        el("suggestedPrice").value = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
+        el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
         return;
       }
 
       if(vVal === ""){
-        state.selectedCatalogVariantIdx = -1;
+        state.selectedVariantIdx = -1;
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
         return;
       }
 
       const vIdx = Number(vVal);
-      state.selectedCatalogVariantIdx = vIdx;
+      state.selectedVariantIdx = vIdx;
       const v = variants[vIdx];
-      el("selectedVariantId").value = v?.lucidsales_variant_id ?? "";
-      el("suggestedPrice").value = getSuggestedPriceFromPricesObj(v?.precios_por_cantidad) || "";
+      el("selectedVariantId").value = lsVariantIdFromRawId(v?.id);
+      el("suggestedPrice").value = (typeof v?.price === "number") ? String(v.price) : "";
     }
 
-    function makeEmptyProduct(){
-      return {
-        product_id: "",
-        price: null,
-        quantity: null,
-        variations: [{ variation_id: "", price: null, quantity: 1 }],
-        _meta: { product_name: "", variant_name: "" }
-      };
-    }
+    function makeOrderItemFromSelection(p, vOrNull){
+      const productId = lsProductIdFromNumericId(p?.id);
+      const productName = p?.name ?? "";
 
-    function makeProductFromCatalog(p, vOrNull){
-      const productId = p?.ids_integracion?.lucidsales_product_id ?? "";
-      const productName = p?.nombre_del_producto ?? "";
       let variantId = "";
       let variantName = "";
-      let suggested = "";
+      let priceSuggested = null;
 
       if(vOrNull){
-        variantId = vOrNull?.lucidsales_variant_id ?? "";
-        variantName = vOrNull?.nombre_de_la_variante ?? "";
-        suggested = getSuggestedPriceFromPricesObj(vOrNull?.precios_por_cantidad) || "";
+        variantId = lsVariantIdFromRawId(vOrNull?.id);
+        variantName = vOrNull?.name ?? "";
+        priceSuggested = (typeof vOrNull?.price === "number") ? vOrNull.price : null;
       }else{
-        suggested = getSuggestedPriceFromPricesObj(p?.precios_por_cantidad) || "";
+        priceSuggested = (typeof p?.price === "number") ? p.price : null;
       }
 
       return {
         product_id: productId,
-        price: null,             // product-level price can be null
-        quantity: null,          // can be null
+        price: null,      // product-level price allowed null
+        quantity: null,   // allowed null
         variations: [{
           variation_id: variantId,
-          price: safeTrim(suggested) === "" ? null : suggested,  // if empty -> null
+          price: priceSuggested === null ? null : String(priceSuggested),
           quantity: 1
         }],
         _meta: { product_name: productName, variant_name: variantName }
       };
     }
 
-    function renderProducts(){
-      const wrap = el("products");
+    function renderOrderProducts(){
+      const wrap = el("orderProducts");
       wrap.innerHTML = "";
 
-      state.products.forEach((p, idx) => {
+      if(state.orderProducts.length === 0){
+        wrap.innerHTML = `<div class="hint">Aún no has agregado productos. Usa “Agregar al pedido”.</div>`;
+        refreshJsonPreview();
+        return;
+      }
+
+      state.orderProducts.forEach((p, idx) => {
         const titleName = safeTrim(p?._meta?.product_name) || `Producto #${idx+1}`;
         const subName = safeTrim(p?._meta?.variant_name);
-        const subtitle = subName ? `${subName}` : "";
+        const subtitle = subName ? `${subName}` : "Sin variante";
 
         const card = document.createElement("div");
         card.className = "product";
@@ -936,33 +819,33 @@
           <div class="product-head">
             <div>
               <div class="product-title">${escapeHtml(titleName)}</div>
-              <div class="mini">${escapeHtml(subtitle)}<br/>Schema: product_id, price(null), quantity(null), variations[]</div>
+              <div class="mini">${escapeHtml(subtitle)}<br/>Puedes ajustar price/quantity. Si dejas price vacío, se envía null.</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
-              <button class="btn btn-soft" type="button" data-add-variation="${idx}">+ Variación</button>
-              <button class="btn btn-danger" type="button" data-remove-product="${idx}">Quitar</button>
+              <button class="btn btn-danger" type="button" data-remove-item="${idx}">Quitar</button>
             </div>
           </div>
 
           <div class="row">
             <div class="field">
               <label>product_id</label>
-              <input placeholder="ls-prod-xxxx" value="${escapeHtml(p.product_id)}" data-p-field="product_id" data-p-idx="${idx}" />
+              <input readonly value="${escapeHtml(p.product_id)}" />
+              <div class="hint">Bloqueado (proviene del GET)</div>
             </div>
             <div class="field">
               <label>price (vacío = null)</label>
-              <input placeholder="(vacío envía null)" value="${p.price === null ? "" : escapeHtml(String(p.price))}" data-p-field="price" data-p-idx="${idx}" />
+              <input placeholder="(vacío envía null)" value="${p.price === null ? "" : escapeHtml(String(p.price))}" data-item-field="price" data-idx="${idx}" />
             </div>
           </div>
 
           <div class="row">
             <div class="field">
               <label>quantity (vacío = null)</label>
-              <input type="number" step="1" placeholder="(vacío envía null)" value="${p.quantity === null ? "" : escapeHtml(String(p.quantity))}" data-p-field="quantity" data-p-idx="${idx}" />
+              <input type="number" step="1" placeholder="(vacío envía null)" value="${p.quantity === null ? "" : escapeHtml(String(p.quantity))}" data-item-field="quantity" data-idx="${idx}" />
             </div>
             <div class="field">
               <label style="opacity:0;">.</label>
-              <div class="hint">Tip: si dejas vacío, se envía <span class="mono">null</span>.</div>
+              <div class="hint">Deja vacío para enviar null.</div>
             </div>
           </div>
 
@@ -977,32 +860,32 @@
           vBox.className = "variation";
           vBox.innerHTML = `
             <div class="variation-head">
-              <div style="font-weight:950; font-size:12px;">Variación #${vIdx + 1}</div>
-              <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar</button>
+              <div style="font-weight:950; font-size:12px;">Variación</div>
+              <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar variación</button>
             </div>
 
             <div class="row">
               <div class="field">
                 <label>variation_id</label>
-                <input placeholder="ls-var-xxxx" value="${escapeHtml(v.variation_id)}"
-                  data-v-field="variation_id" data-p-idx="${idx}" data-v-idx="${vIdx}" />
+                <input readonly value="${escapeHtml(v.variation_id)}" />
+                <div class="hint">Bloqueado (proviene del GET)</div>
               </div>
               <div class="field">
                 <label>price (vacío = null)</label>
                 <input placeholder="(vacío envía null)" value="${v.price === null ? "" : escapeHtml(String(v.price))}"
-                  data-v-field="price" data-p-idx="${idx}" data-v-idx="${vIdx}" />
+                  data-var-field="price" data-idx="${idx}" data-v-idx="${vIdx}" />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label>quantity (number)</label>
-                <input type="number" step="1" placeholder="0" value="${escapeHtml(String(v.quantity ?? 0))}"
-                  data-v-field="quantity" data-p-idx="${idx}" data-v-idx="${vIdx}" />
+                <input type="number" step="1" placeholder="1" value="${escapeHtml(String(v.quantity ?? 1))}"
+                  data-var-field="quantity" data-idx="${idx}" data-v-idx="${vIdx}" />
               </div>
               <div class="field">
                 <label style="opacity:0;">.</label>
-                <div class="hint">quantity por defecto: 1 al agregar desde catálogo.</div>
+                <div class="hint">Por defecto: 1</div>
               </div>
             </div>
           `;
@@ -1010,80 +893,61 @@
         });
       });
 
-      bindDynamicEvents();
+      bindOrderEvents();
       refreshJsonPreview();
     }
 
-    function bindDynamicEvents(){
-      document.querySelectorAll("[data-p-field]").forEach(inp => {
+    function bindOrderEvents(){
+      document.querySelectorAll("[data-item-field]").forEach(inp => {
         inp.oninput = () => {
-          const pIdx = Number(inp.getAttribute("data-p-idx"));
-          const field = inp.getAttribute("data-p-field");
-          if(!state.products[pIdx]) return;
-
+          const idx = Number(inp.getAttribute("data-idx"));
+          const field = inp.getAttribute("data-item-field");
           const raw = inp.value;
+          const item = state.orderProducts[idx];
+          if(!item) return;
 
-          if(field === "product_id"){
-            state.products[pIdx].product_id = raw;
-          } else if(field === "price"){
-            state.products[pIdx].price = (safeTrim(raw) === "") ? null : raw;
-          } else if(field === "quantity"){
-            state.products[pIdx].quantity = (safeTrim(raw) === "") ? null : asInt(raw, 0);
-          }
+          if(field === "price") item.price = (safeTrim(raw) === "") ? null : raw;
+          if(field === "quantity") item.quantity = (safeTrim(raw) === "") ? null : asInt(raw, 0);
+
           refreshJsonPreview();
         };
       });
 
-      document.querySelectorAll("[data-v-field]").forEach(inp => {
+      document.querySelectorAll("[data-var-field]").forEach(inp => {
         inp.oninput = () => {
-          const pIdx = Number(inp.getAttribute("data-p-idx"));
+          const idx = Number(inp.getAttribute("data-idx"));
           const vIdx = Number(inp.getAttribute("data-v-idx"));
-          const field = inp.getAttribute("data-v-field");
+          const field = inp.getAttribute("data-var-field");
           const raw = inp.value;
+          const item = state.orderProducts[idx];
+          if(!item || !item.variations[vIdx]) return;
 
-          const p = state.products[pIdx];
-          if(!p || !p.variations[vIdx]) return;
-
-          if(field === "variation_id") p.variations[vIdx].variation_id = raw;
-          if(field === "price") p.variations[vIdx].price = (safeTrim(raw) === "") ? null : raw;
-          if(field === "quantity") p.variations[vIdx].quantity = asInt(raw, 0);
+          if(field === "price") item.variations[vIdx].price = (safeTrim(raw) === "") ? null : raw;
+          if(field === "quantity") item.variations[vIdx].quantity = asInt(raw, 1);
 
           refreshJsonPreview();
         };
       });
 
-      document.querySelectorAll("[data-remove-product]").forEach(btn => {
+      document.querySelectorAll("[data-remove-item]").forEach(btn => {
         btn.onclick = () => {
-          const idx = Number(btn.getAttribute("data-remove-product"));
-          state.products.splice(idx, 1);
-          if(state.products.length === 0){
-            state.products.push(makeEmptyProduct());
-          }
-          renderProducts();
-        };
-      });
-
-      document.querySelectorAll("[data-add-variation]").forEach(btn => {
-        btn.onclick = () => {
-          const idx = Number(btn.getAttribute("data-add-variation"));
-          const p = state.products[idx];
-          if(!p) return;
-          p.variations.push({ variation_id:"", price:null, quantity:1 });
-          renderProducts();
+          const idx = Number(btn.getAttribute("data-remove-item"));
+          state.orderProducts.splice(idx, 1);
+          renderOrderProducts();
         };
       });
 
       document.querySelectorAll("[data-remove-variation]").forEach(btn => {
         btn.onclick = () => {
-          const pIdx = Number(btn.getAttribute("data-remove-variation"));
+          const idx = Number(btn.getAttribute("data-remove-variation"));
           const vIdx = Number(btn.getAttribute("data-v-idx"));
-          const p = state.products[pIdx];
-          if(!p) return;
-          p.variations.splice(vIdx, 1);
-          if(p.variations.length === 0){
-            p.variations.push({ variation_id:"", price:null, quantity:1 });
+          const item = state.orderProducts[idx];
+          if(!item) return;
+          item.variations.splice(vIdx, 1);
+          if(item.variations.length === 0){
+            item.variations.push({ variation_id:"", price:null, quantity:1 });
           }
-          renderProducts();
+          renderOrderProducts();
         };
       });
     }
@@ -1107,13 +971,13 @@
         city: safeTrim(el("city").value),
         state: safeTrim(el("state").value),
 
-        products: state.products.map(p => ({
+        products: state.orderProducts.map(p => ({
           product_id: safeTrim(p.product_id),
           price: (p.price === null || safeTrim(p.price) === "") ? null : p.price,
           variations: (p.variations || []).map(v => ({
             variation_id: safeTrim(v.variation_id),
             price: (v.price === null || safeTrim(v.price) === "") ? null : v.price,
-            quantity: asInt(v.quantity, 0)
+            quantity: asInt(v.quantity, 1)
           })),
           quantity: (p.quantity === null || safeTrim(String(p.quantity)) === "") ? null : asInt(p.quantity, 0)
         })),
@@ -1128,8 +992,78 @@
     }
 
     function refreshJsonPreview(){
-      const payload = buildOrderPayload();
-      el("jsonBox").textContent = JSON.stringify(payload, null, 2);
+      el("jsonBox").textContent = JSON.stringify(buildOrderPayload(), null, 2);
+    }
+
+    async function loadProducts(){
+      const apiKey = safeTrim(el("apiKey").value);
+      if(!apiKey){
+        el("productsRespBox").textContent = "Falta el API Key.";
+        setProductsControlsEnabled(false);
+        return;
+      }
+
+      el("productsRespBox").textContent = "(cargando productos...)";
+
+      try{
+        const res = await fetch(PRODUCTS_API_URL, {
+          method: "GET",
+          headers: {
+            "accept": "application/json",
+            "Authorization": apiKey
+          }
+        });
+
+        const contentType = res.headers.get("content-type") || "";
+        let body;
+        if(contentType.includes("application/json")){
+          body = await res.json();
+        }else{
+          body = await res.text();
+        }
+
+        const show = (typeof body === "string") ? body : JSON.stringify(body, null, 2);
+
+        el("productsRespBox").textContent =
+          `HTTP ${res.status}\n` +
+          `content-type: ${contentType || "(no especificado)"}\n\n` +
+          show;
+
+        if(!res.ok){
+          setProductsControlsEnabled(false);
+          return;
+        }
+
+        if(typeof body === "string"){
+          throw new Error("La respuesta no es JSON (vino como texto).");
+        }
+
+        state.apiProducts = normalizeProductsResponse(body);
+        fillProductSelect();
+        setProductsControlsEnabled(true);
+
+      }catch(err){
+        setProductsControlsEnabled(false);
+        el("productsRespBox").textContent = String(err?.message || err);
+      }
+    }
+
+    function addSelectionToOrder(){
+      const pIdx = state.selectedProductIdx;
+      if(pIdx < 0) return;
+
+      const p = state.apiProducts[pIdx];
+      const variants = Array.isArray(p?.variants) ? p.variants : [];
+
+      let v = null;
+      const vSel = el("variantSelect").value;
+
+      if(vSel !== "" && vSel !== "__none__" && variants.length){
+        v = variants[Number(vSel)] || null;
+      }
+
+      state.orderProducts.push(makeOrderItemFromSelection(p, v));
+      renderOrderProducts();
     }
 
     async function sendOrder(){
@@ -1139,6 +1073,12 @@
       if(!apiKey){
         setStatus("bad", "Falta el API Key.");
         el("respBox").textContent = "Debes ingresar el API Key para enviar el pedido.";
+        return;
+      }
+
+      if(state.orderProducts.length === 0){
+        setStatus("bad", "Agrega al menos 1 producto del listado.");
+        el("respBox").textContent = "No hay productos en el pedido. Usa “Agregar al pedido”.";
         return;
       }
 
@@ -1152,7 +1092,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "authorization": apiKey
+            "Authorization": apiKey
           },
           body: JSON.stringify(payload)
         });
@@ -1184,50 +1124,24 @@
       }
     }
 
-    function addFromCatalogToOrder(){
-      const pIdx = state.selectedCatalogProductIdx;
-      if(pIdx < 0) return;
-
-      const p = state.catalogProducts[pIdx];
-      const variants = Array.isArray(p?.variantes) ? p.variantes : [];
-
-      let v = null;
-      const vSel = el("catalogVariantSelect").value;
-      if(vSel !== "" && vSel !== "__none__" && variants.length){
-        const vIdx = Number(vSel);
-        v = variants[vIdx] || null;
-      }
-
-      const item = makeProductFromCatalog(p, v);
-      state.products.push(item);
-      renderProducts();
-      refreshJsonPreview();
-    }
-
     function init(){
-      // start with 1 empty product to avoid empty array
-      state.products = [ makeEmptyProduct() ];
-      renderProducts();
+      state.orderProducts = [];
+      renderOrderProducts();
+      refreshJsonPreview();
+      setProductsControlsEnabled(false);
 
-      el("loadCatalogBtn").onclick = loadCatalog;
+      el("loadProductsBtn").onclick = loadProducts;
 
-      el("catalogProductSelect").addEventListener("change", () => {
-        updateSelectedCatalogInfo();
-        el("addFromCatalogBtn").disabled = (el("catalogProductSelect").value === "");
+      el("productSelect").addEventListener("change", () => {
+        updateSelectedProduct();
+        el("addToOrderBtn").disabled = (el("productSelect").value === "");
       });
 
-      el("catalogVariantSelect").addEventListener("change", () => {
-        updateSelectedVariantInfo();
-      });
+      el("variantSelect").addEventListener("change", updateSelectedVariant);
 
-      el("addFromCatalogBtn").onclick = () => {
-        if(el("catalogProductSelect").value === "") return;
-        addFromCatalogToOrder();
-      };
-
-      el("addEmptyProductBtn").onclick = () => {
-        state.products.push(makeEmptyProduct());
-        renderProducts();
+      el("addToOrderBtn").onclick = () => {
+        if(el("productSelect").value === "") return;
+        addSelectionToOrder();
       };
 
       el("sendBtn").onclick = sendOrder;
@@ -1254,7 +1168,6 @@
 
       updateFullnameAuto();
       refreshJsonPreview();
-      setCatalogControlsEnabled(false);
     }
 
     init();

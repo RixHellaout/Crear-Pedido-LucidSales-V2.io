@@ -391,6 +391,36 @@
     }
 
     .hidden{ display:none !important; }
+
+    /* NEW: thumbs in lists */
+    .thumb{
+      width:40px; height:40px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#fff;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .thumb-fallback{
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      color:var(--muted);
+      font-weight:900;
+      background:#f8fafc;
+    }
   </style>
 </head>
 <body>
@@ -664,6 +694,10 @@
             <div class="small-muted" style="margin:14px 0 8px;">Respuesta productos (GET /products/)</div>
             <div id="productsRespBox" class="codebox" style="max-height:210px;">(vacío)</div>
 
+            <!-- NEW -->
+            <div class="small-muted" style="margin:14px 0 8px;">Respuesta imágenes (POST /products/images)</div>
+            <div id="imagesRespBox" class="codebox" style="max-height:240px;">(vacío)</div>
+
             <div class="small-muted" style="margin:14px 0 8px;">Respuesta pedido (POST /orders/create)</div>
             <div id="respBox" class="codebox" style="max-height:240px;">(vacío)</div>
 
@@ -682,6 +716,7 @@
 
   <script>
     const PRODUCTS_API_URL = "https://panel.lucidsales.co/b/api/v1/products/";
+    const PRODUCT_IMAGES_API_URL = "https://panel.lucidsales.co/b/api/v1/products/images";
     const ORDER_API_URL    = "https://panel.lucidsales.co/b/api/v1/orders/create";
     const MAKE_HOOK_URL    = "https://hook.us2.make.com/bv1dxuxzes2wbdy5qp2o75ojwbi461fz";
 
@@ -693,7 +728,9 @@
       selectedProductIdx: -1,
       selectedVariantIdx: -1,
       selectedProductHasVariants: false,
-      _lastComputedFullname: ""
+      _lastComputedFullname: "",
+      // NEW: cache de imágenes: key -> firstUrl (o null)
+      imagesByKey: new Map() // key: productName + '||' + stableVarsJson
     };
 
     function safeTrim(v){ return (v ?? "").toString().trim(); }
@@ -947,7 +984,8 @@
           _meta: {
             product_name: productName,
             variant_name: vOrNull?.name ?? "",
-            suggested_unit_price: suggested
+            suggested_unit_price: suggested,
+            image_url: null
           }
         };
       }
@@ -962,7 +1000,8 @@
         _meta: {
           product_name: productName,
           variant_name: "",
-          suggested_unit_price: suggested
+          suggested_unit_price: suggested,
+          image_url: null
         }
       };
     }
@@ -998,6 +1037,142 @@
       return { qty, sale };
     }
 
+    // -------- NEW: helpers imágenes ----------
+    function stableVarsJson(obj){
+      const o = (obj && typeof obj === "object") ? obj : {};
+      const keys = Object.keys(o).sort((a,b)=>a.localeCompare(b));
+      const sorted = {};
+      for(const k of keys) sorted[k] = o[k];
+      return JSON.stringify(sorted);
+    }
+    function makeImageCacheKey(productName, varsObj){
+      return `${safeTrim(productName)}||${stableVarsJson(varsObj)}`;
+    }
+
+    function parseVariantVariables(variantName){
+      // "Color: Negro / Talla: 42" -> {Color:"Negro", Talla:"42"}
+      const name = safeTrim(variantName);
+      if(!name) return {};
+      const parts = name.split(/[\/|,]+/).map(s => safeTrim(s)).filter(Boolean);
+      const out = {};
+      for(const part of parts){
+        const m = part.match(/^([^:]+)\s*:\s*(.+)$/);
+        if(m){
+          const k = safeTrim(m[1]);
+          const v = safeTrim(m[2]);
+          if(k && v && v.toLowerCase() !== "undefined") out[k] = v;
+        }
+      }
+      return out;
+    }
+
+    function extractFirstImageUrlFromMessages(messages){
+      if(!Array.isArray(messages)) return null;
+      for(const m of messages){
+        const url = m?.message?.attachment?.payload?.url;
+        if(typeof url === "string" && safeTrim(url)) return safeTrim(url);
+      }
+      return null;
+    }
+
+    async function fetchProductImageFirstUrl(productName, varsObj){
+      const apiKey = safeTrim(el("apiKey").value);
+      if(!apiKey) return null;
+
+      const key = makeImageCacheKey(productName, varsObj);
+      if(state.imagesByKey.has(key)) return state.imagesByKey.get(key); // puede ser null
+
+      const payload = [{ product: productName, variables: (varsObj && typeof varsObj === "object") ? varsObj : {} }];
+
+      try{
+        const res = await fetch(PRODUCT_IMAGES_API_URL, {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": apiKey
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const ctype = res.headers.get("content-type") || "";
+        let body;
+        if(ctype.includes("application/json")) body = await res.json();
+        else body = await res.text();
+
+        // mostramos la última respuesta de imágenes
+        const show = (typeof body === "string") ? body : JSON.stringify(body, null, 2);
+        el("imagesRespBox").textContent =
+          `HTTP ${res.status}\n` +
+          `content-type: ${ctype || "(no especificado)"}\n\n` +
+          show;
+
+        let firstUrl = null;
+        if(res.ok && body && typeof body === "object"){
+          firstUrl = extractFirstImageUrlFromMessages(body.messages);
+        }
+
+        state.imagesByKey.set(key, firstUrl || null);
+        return firstUrl || null;
+
+      }catch(err){
+        // No rompemos el flujo: guardamos null
+        el("imagesRespBox").textContent = String(err?.message || err);
+        state.imagesByKey.set(key, null);
+        return null;
+      }
+    }
+
+    async function preloadAllProductImages(){
+      // se dispara tras "Cargar productos": pide imágenes para cada producto (variables: {})
+      const apiKey = safeTrim(el("apiKey").value);
+      if(!apiKey){
+        el("imagesRespBox").textContent = "Falta el API Key.";
+        return;
+      }
+      if(!Array.isArray(state.apiProducts) || state.apiProducts.length === 0){
+        el("imagesRespBox").textContent = "Primero carga productos.";
+        return;
+      }
+
+      el("imagesRespBox").textContent = "(cargando imágenes de productos...)";
+
+      const payload = state.apiProducts.map(p => ({
+        product: safeTrim(p?.name),
+        variables: {}
+      })).filter(x => x.product);
+
+      try{
+        const res = await fetch(PRODUCT_IMAGES_API_URL, {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": apiKey
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const ctype = res.headers.get("content-type") || "";
+        let body;
+        if(ctype.includes("application/json")) body = await res.json();
+        else body = await res.text();
+
+        const show = (typeof body === "string") ? body : JSON.stringify(body, null, 2);
+        el("imagesRespBox").textContent =
+          `HTTP ${res.status}\n` +
+          `content-type: ${ctype || "(no especificado)"}\n\n` +
+          show;
+
+        // Si el API devuelve un bloque con "messages", NO hay mapeo por producto en ese ejemplo,
+        // así que aquí solo dejamos el preview. El cache se llena al agregar al pedido (llamada individual)
+        // para asegurar que obtenemos la imagen correcta por producto/variables.
+      }catch(err){
+        el("imagesRespBox").textContent = String(err?.message || err);
+      }
+    }
+    // ----------------------------------------
+
     function renderOrderProducts(){
       const wrap = el("orderProducts");
       wrap.innerHTML = "";
@@ -1014,6 +1189,11 @@
         const subName = safeTrim(p?._meta?.variant_name);
         const subtitle = hasVars ? (subName || "Con variación") : "Sin variaciones";
 
+        const imgUrl = safeTrim(p?._meta?.image_url);
+        const thumbHtml = imgUrl
+          ? `<div class="thumb"><img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(titleName)}" loading="lazy" /></div>`
+          : `<div class="thumb"><div class="thumb-fallback">SIN<br>IMAGEN</div></div>`;
+
         const card = document.createElement("div");
         card.className = "product";
 
@@ -1022,9 +1202,12 @@
 
         card.innerHTML = `
           <div class="product-head">
-            <div>
-              <div class="product-title">${escapeHtml(titleName)}</div>
-              <div class="mini">${escapeHtml(subtitle)}</div>
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              ${thumbHtml}
+              <div>
+                <div class="product-title">${escapeHtml(titleName)}</div>
+                <div class="mini">${escapeHtml(subtitle)}</div>
+              </div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <button class="btn btn-danger" type="button" data-remove-item="${idx}">Quitar</button>
@@ -1303,9 +1486,18 @@
           const row = document.createElement("div");
           row.className = "summary-row";
           row.innerHTML = `
-            <div class="summary-left">
-              <div class="summary-name">${escapeHtml(name)}${qty ? ` x ${escapeHtml(String(qty))}` : ""}</div>
-              <div class="summary-sub">${escapeHtml(varName || (Array.isArray(item?.variations) && item.variations.length ? "Con variación" : "Sin variación"))}</div>
+            <div class="summary-left" style="display:flex; flex-direction:row; align-items:center; gap:10px;">
+              <div class="thumb" style="width:34px; height:34px; border-radius:10px;">
+                ${
+                  safeTrim(item?._meta?.image_url)
+                    ? `<img src="${escapeHtml(item._meta.image_url)}" alt="${escapeHtml(name)}" loading="lazy" />`
+                    : `<div class="thumb-fallback" style="font-size:9px;">SIN<br>IMAGEN</div>`
+                }
+              </div>
+              <div style="display:flex; flex-direction:column; gap:3px;">
+                <div class="summary-name">${escapeHtml(name)}${qty ? ` x ${escapeHtml(String(qty))}` : ""}</div>
+                <div class="summary-sub">${escapeHtml(varName || (Array.isArray(item?.variations) && item.variations.length ? "Con variación" : "Sin variación"))}</div>
+              </div>
             </div>
             <div class="money">${escapeHtml(fmtMoney(sale))}</div>
           `;
@@ -1337,6 +1529,7 @@
       }
 
       el("productsRespBox").textContent = "(cargando productos...)";
+      el("imagesRespBox").textContent = "(pendiente)";
 
       try{
         const res = await fetch(PRODUCTS_API_URL, {
@@ -1375,30 +1568,54 @@
         fillProductSelect();
         setProductsControlsEnabled(true);
 
+        // NEW: tras cargar productos, disparar POST /products/images con variables: {}
+        await preloadAllProductImages();
+
       }catch(err){
         setProductsControlsEnabled(false);
         el("productsRespBox").textContent = String(err?.message || err);
       }
     }
 
-    function addSelectionToOrder(){
+    // NEW: ahora es async para poder pedir imagen al agregar
+    async function addSelectionToOrder(){
       const pIdx = state.selectedProductIdx;
       if(pIdx < 0) return;
+
+      const apiKey = safeTrim(el("apiKey").value);
+      if(!apiKey){
+        setStatus("bad", "Falta el API Key para traer imágenes.");
+        return;
+      }
 
       const p = state.apiProducts[pIdx];
       const variants = Array.isArray(p?.variants) ? p.variants : [];
       const hasVariants = variants.length > 0;
+
+      let itemToAdd = null;
+      let varsObj = {};
+      let variantName = "";
 
       if(hasVariants){
         const vVal = el("variantSelect").value;
         if(vVal === "") return;
         const v = variants[Number(vVal)] || null;
         if(!v) return;
-        state.orderProducts.push(makeOrderItemFromSelection(p, v));
+
+        variantName = safeTrim(v?.name);
+        varsObj = parseVariantVariables(variantName);
+
+        itemToAdd = makeOrderItemFromSelection(p, v);
       }else{
-        state.orderProducts.push(makeOrderItemFromSelection(p, null));
+        varsObj = {};
+        itemToAdd = makeOrderItemFromSelection(p, null);
       }
 
+      // NEW: traer primera imagen y asignarla al item (si no hay, queda null => "Sin imagen")
+      const firstUrl = await fetchProductImageFirstUrl(safeTrim(p?.name), varsObj);
+      itemToAdd._meta.image_url = firstUrl || null;
+
+      state.orderProducts.push(itemToAdd);
       renderOrderProducts();
     }
 
@@ -1563,6 +1780,7 @@
       setStatus("neutral", "Formulario reiniciado.");
       el("respBox").textContent = "(vacío)";
       el("hookRespBox").textContent = "(vacío)";
+      el("imagesRespBox").textContent = "(vacío)";
       refreshAllPanels();
     }
 
@@ -1576,7 +1794,7 @@
 
       el("productSelect").addEventListener("change", updateSelectedProduct);
       el("variantSelect").addEventListener("change", updateSelectedVariant);
-      el("addToOrderBtn").onclick = addSelectionToOrder;
+      el("addToOrderBtn").onclick = addSelectionToOrder; // async ok
 
       el("sendBtn").onclick = sendOrder;
 
@@ -1614,4 +1832,4 @@
   </script>
 </body>
 </html>
-```
+

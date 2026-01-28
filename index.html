@@ -86,13 +86,15 @@
 
     .grid{
       display:grid;
-      grid-template-columns: 1.35fr .85fr;
+      grid-template-columns: 1.25fr .75fr;
       gap:18px;
       align-items:start;
     }
     @media (max-width: 1100px){
       .grid{ grid-template-columns: 1fr; }
     }
+
+    .stack{ display:flex; flex-direction:column; gap:18px; }
 
     .card{
       background: var(--card);
@@ -298,6 +300,98 @@
     .badge.neutral{ color:var(--muted); background: rgba(100,116,139,.08); border-color: rgba(100,116,139,.20); }
 
     .small-muted{ font-size:12px; color:var(--muted); font-weight:800; }
+
+    /* Summary */
+    .summary-list{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      overflow:hidden;
+    }
+    .summary-head{
+      display:flex;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      background: #f8fafc;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+    }
+    .summary-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      font-size:13px;
+      font-weight:800;
+    }
+    .summary-row:last-child{ border-bottom:0; }
+    .summary-left{ display:flex; flex-direction:column; gap:3px; }
+    .summary-name{ font-weight:950; color:var(--text); }
+    .summary-sub{ font-size:12px; color:var(--muted); font-weight:750; }
+    .money{ font-variant-numeric: tabular-nums; }
+
+    .totals{
+      margin-top:12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .tot-line{
+      display:flex;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      font-size:12.5px;
+      font-weight:850;
+      color:var(--text);
+    }
+    .tot-line:last-child{ border-bottom:0; }
+    .tot-muted{ color:var(--muted); font-weight:850; }
+    .tot-green{ color:var(--ok); font-weight:950; }
+
+    .toggle{
+      display:flex; gap:10px; flex-wrap:wrap;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+    }
+    .radio{
+      flex:1;
+      min-width: 160px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:950;
+      background:#fff;
+      transition:.15s ease;
+    }
+    .radio input{ width:auto; margin:0; }
+    .radio.active{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+      background: rgba(37,99,235,.06);
+    }
+
+    .footer-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding:12px 16px;
+      border-top:1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .hidden{ display:none !important; }
   </style>
 </head>
 <body>
@@ -306,8 +400,8 @@
       <div class="brand">
         <div class="dot" aria-hidden="true"></div>
         <div>
-          <div>Crear Pedido (PC)</div>
-          <div class="sub">Carga productos, elige correctamente y envía</div>
+          <div>Crear Orden</div>
+          <div class="sub">Diseño tipo “panel” (cliente + productos + resumen)</div>
         </div>
       </div>
       <div class="pill"><span class="swatch" aria-hidden="true"></span> Blanco + Azul</div>
@@ -317,231 +411,307 @@
   <div class="wrap">
     <div class="grid">
       <!-- LEFT -->
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Pedido + Productos</h2>
-            <p class="card-desc">
-              Si un producto tiene variantes, debes elegir una variante (no se puede elegir el producto “general”).
-              Si no tiene variantes, funciona como siempre.
-            </p>
+      <div class="stack">
+        <!-- Datos cliente -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Información del cliente</h2>
+              <p class="card-desc">Completa los datos básicos. El canal ahora es un desplegable.</p>
+            </div>
+            <div class="btns" style="margin:0;">
+              <button class="btn btn-soft" type="button" id="loadProductsBtn">Cargar productos</button>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="row">
+              <div class="field">
+                <label for="apiKey">API Key</label>
+                <input id="apiKey" placeholder="Pega tu api key aquí" autocomplete="off" />
+                <div class="hint">Headers: <span class="mono">Authorization</span> (productos y pedido). Hook: <span class="mono">api_key</span> en body.</div>
+              </div>
+              <div class="field">
+                <label for="shopify_order_id">shopify_order_id</label>
+                <input id="shopify_order_id" placeholder="Ej: 1234567890" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="name">Nombres</label>
+                <input id="name" placeholder="Nombres" />
+              </div>
+              <div class="field">
+                <label for="surname">Apellidos</label>
+                <input id="surname" placeholder="Apellidos" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="phone">Número de teléfono</label>
+                <input id="phone" placeholder="+57..." />
+              </div>
+              <div class="field">
+                <label for="client_email">Correo electrónico</label>
+                <input id="client_email" type="email" placeholder="correo@dominio.com" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="state">Departamento / Provincia</label>
+                <input id="state" placeholder="Ej: Cundinamarca" />
+              </div>
+              <div class="field">
+                <label for="city">Ciudad</label>
+                <input id="city" placeholder="Ej: Bogotá" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="dir">Dirección y complementos</label>
+                <input id="dir" placeholder="Dirección, barrio, apto, etc." />
+              </div>
+              <div class="field">
+                <label for="references">Referencias</label>
+                <input id="references" placeholder="Ej: portería, color casa, etc." />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="source">Canal</label>
+                <select id="source">
+                  <option value="">(Selecciona)</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Messenger">Messenger</option>
+                  <option value="Web">Web</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="lucidbot_inbox">lucidbot_inbox</label>
+                <input id="lucidbot_inbox" placeholder="Inbox / canal / id" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="ctwa">ctwa</label>
+                <input id="ctwa" placeholder="campaña / origen CTWA" />
+              </div>
+              <div class="field">
+                <label for="ad">ad</label>
+                <input id="ad" placeholder="nombre del anuncio" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="document">document</label>
+                <input id="document" placeholder="CC / NIT / documento" />
+              </div>
+              <div class="field">
+                <label for="notes">notes</label>
+                <input id="notes" placeholder="Notas rápidas" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="discount">discount (string)</label>
+                <input id="discount" placeholder="0" value="0" />
+              </div>
+              <div class="field">
+                <label for="fullname">fullname</label>
+                <input id="fullname" placeholder="Se autocompleta (puedes editarlo)" />
+                <div class="hint">Se autogenera con <span class="mono">name + surname</span>.</div>
+              </div>
+            </div>
+
+            <!-- rate_type hidden: se controla por Método de pago -->
+            <input id="rate_type" type="number" value="1" class="hidden" />
           </div>
         </div>
 
-        <div class="card-body">
-          <div class="row">
-            <div class="field">
-              <label for="apiKey">API Key</label>
-              <input id="apiKey" placeholder="Pega tu api key aquí" autocomplete="off" />
-              <div class="hint">Headers: <span class="mono">Authorization</span> (pedido y productos). Hook: va en body como <span class="mono">api_key</span>.</div>
-            </div>
-            <div class="field">
-              <label for="shopify_order_id">shopify_order_id</label>
-              <input id="shopify_order_id" placeholder="Ej: 1234567890" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="discount">discount (string)</label>
-              <input id="discount" placeholder="0" value="0" />
-            </div>
-            <div class="field">
-              <label for="ctwa">ctwa</label>
-              <input id="ctwa" placeholder="Ej: campaña / origen CTWA" />
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;">
+        <!-- Productos -->
+        <div class="card">
+          <div class="card-header">
             <div>
-              <div style="font-weight:950;">Productos</div>
-              <div class="mini">Cárgalos y selecciona. Si el producto tiene variantes, debes escoger una.</div>
-            </div>
-            <button class="btn btn-soft" type="button" id="loadProductsBtn">Cargar productos</button>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="productSelect">Producto</label>
-              <select id="productSelect" disabled>
-                <option value="">(Carga los productos)</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="variantSelect">Variante</label>
-              <select id="variantSelect" disabled>
-                <option value="">(Selecciona un producto)</option>
-              </select>
-              <div class="hint" id="variantHint">—</div>
+              <h2 class="card-title">Seleccionar productos</h2>
+              <p class="card-desc">
+                Si un producto tiene variantes, debes elegir una variante (no se puede elegir el “general”).
+              </p>
             </div>
           </div>
 
-          <div class="row">
-            <div class="field">
-              <label for="selectedProductId">product_id (se envía)</label>
-              <input id="selectedProductId" readonly placeholder="Se llena al elegir producto" />
+          <div class="card-body">
+            <div class="row">
+              <div class="field">
+                <label for="productSelect">Producto</label>
+                <select id="productSelect" disabled>
+                  <option value="">(Carga los productos)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="variantSelect">Variante</label>
+                <select id="variantSelect" disabled>
+                  <option value="">(Selecciona un producto)</option>
+                </select>
+                <div class="hint" id="variantHint">—</div>
+              </div>
             </div>
-            <div class="field">
-              <label for="selectedVariantId">variation_id (se envía si aplica)</label>
-              <input id="selectedVariantId" readonly placeholder="Se llena al elegir variante" />
-            </div>
-          </div>
 
-          <div class="row">
-            <div class="field">
-              <label for="suggestedPrice">Precio sugerido (solo referencia)</label>
-              <input id="suggestedPrice" readonly placeholder="(Según variante o producto)" />
-              <div class="hint" id="priceHint">—</div>
+            <div class="row">
+              <div class="field">
+                <label for="selectedProductId">product_id (se envía)</label>
+                <input id="selectedProductId" readonly placeholder="Se llena al elegir producto" />
+              </div>
+              <div class="field">
+                <label for="selectedVariantId">variation_id (se envía si aplica)</label>
+                <input id="selectedVariantId" readonly placeholder="Se llena al elegir variante" />
+              </div>
             </div>
-            <div class="field" style="justify-content:flex-end;">
-              <label style="opacity:0;">.</label>
-              <button class="btn btn-primary" type="button" id="addToOrderBtn" disabled>Agregar al pedido</button>
-              <div class="hint" id="addHint">Selecciona producto.</div>
-            </div>
-          </div>
 
-          <div class="divider"></div>
+            <div class="row">
+              <div class="field">
+                <label for="suggestedPrice">Precio sugerido (referencia)</label>
+                <input id="suggestedPrice" readonly placeholder="(Según variante o producto)" />
+                <div class="hint" id="priceHint">—</div>
+              </div>
+              <div class="field" style="justify-content:flex-end;">
+                <label style="opacity:0;">.</label>
+                <button class="btn btn-primary" type="button" id="addToOrderBtn" disabled>Agregar al pedido</button>
+                <div class="hint" id="addHint">Selecciona producto.</div>
+              </div>
+            </div>
 
-          <!-- DATOS CLIENTE -->
-          <div class="row">
-            <div class="field">
-              <label for="name">name</label>
-              <input id="name" placeholder="Nombre" />
-            </div>
-            <div class="field">
-              <label for="surname">surname</label>
-              <input id="surname" placeholder="Apellido" />
-            </div>
-          </div>
+            <div class="divider"></div>
 
-          <div class="row">
-            <div class="field">
-              <label for="fullname">fullname</label>
-              <input id="fullname" placeholder="Se autocompleta (puedes editarlo)" />
-              <div class="hint">Se autogenera con <span class="mono">name + surname</span>.</div>
-            </div>
-            <div class="field">
-              <label for="total">total (number)</label>
-              <input id="total" type="number" step="0.01" placeholder="0" value="0" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="document">document</label>
-              <input id="document" placeholder="CC / NIT / documento" />
-            </div>
-            <div class="field">
-              <label for="client_email">client_email</label>
-              <input id="client_email" type="email" placeholder="correo@dominio.com" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="phone">phone</label>
-              <input id="phone" placeholder="+57..." />
-            </div>
-            <div class="field">
-              <label for="dir">dir</label>
-              <input id="dir" placeholder="Dirección" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="city">city</label>
-              <input id="city" placeholder="Ciudad" />
-            </div>
-            <div class="field">
-              <label for="state">state</label>
-              <input id="state" placeholder="Provincia / Departamento" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="references">references</label>
-              <input id="references" placeholder="Referencias" />
-            </div>
-            <div class="field">
-              <label for="rate_type">rate_type (number)</label>
-              <input id="rate_type" type="number" step="1" placeholder="0" value="0" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="source">source</label>
-              <input id="source" placeholder="Ej: whatsapp / ig / web" />
-            </div>
-            <div class="field">
-              <label for="lucidbot_inbox">lucidbot_inbox</label>
-              <input id="lucidbot_inbox" placeholder="Inbox / canal / id" />
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="field">
-              <label for="ad">ad</label>
-              <input id="ad" placeholder="Ej: nombre del anuncio" />
-            </div>
-            <div class="field">
-              <label for="notes">notes</label>
-              <input id="notes" placeholder="Notas rápidas" />
-            </div>
-          </div>
-
-          <div style="margin-top:16px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px;">
               <div>
                 <div style="font-weight:950;">Productos del pedido</div>
                 <div class="mini">
-                  Si el producto tiene variantes: se envía <span class="mono">quantity:null</span> y la cantidad va en cada variación.
-                  Si no tiene variantes: se envía <span class="mono">variations:[]</span> y <span class="mono">quantity</span> en el producto.
+                  Con variantes: quantity del producto se envía <span class="mono">null</span>, y la cantidad va en cada variación.
                 </div>
               </div>
             </div>
 
             <div id="orderProducts" class="products"></div>
           </div>
-
-          <div class="btns" style="margin-top:16px;">
-            <button class="btn btn-primary" type="button" id="sendBtn">Enviar pedido</button>
-            <button class="btn btn-ghost" type="button" id="refreshBtn">Actualizar JSON</button>
-            <button class="btn btn-soft" type="button" id="copyJsonBtn">Copiar JSON</button>
-          </div>
         </div>
       </div>
 
-      <!-- RIGHT -->
+      <!-- RIGHT: Resumen -->
       <div class="card">
         <div class="card-header">
           <div>
-            <h2 class="card-title">JSON enviado y respuestas</h2>
-            <p class="card-desc">JSON del pedido + respuesta de productos + respuesta del pedido + respuesta del hook.</p>
+            <h2 class="card-title">Resumen de la orden</h2>
+            <p class="card-desc">Método de pago (recaudo / sin recaudo) y totales tipo “panel”.</p>
+          </div>
+          <div class="btns" style="margin:0;">
+            <button class="btn btn-soft" type="button" id="toggleJsonBtn">Mostrar JSON</button>
           </div>
         </div>
 
         <div class="card-body">
-          <div class="small-muted" style="margin-bottom:8px;">JSON del pedido</div>
-          <div id="jsonBox" class="codebox">{}</div>
+          <!-- Método de pago -->
+          <div class="small-muted" style="margin-bottom:8px;">Método de pago</div>
+          <div class="toggle" id="payToggle">
+            <label class="radio active" id="pay1">
+              <input type="radio" name="pay" value="1" checked />
+              Con recaudo
+            </label>
+            <label class="radio" id="pay2">
+              <input type="radio" name="pay" value="2" />
+              Sin recaudo
+            </label>
+          </div>
+          <div class="hint">Se envía internamente como <span class="mono">rate_type: 1</span> (con recaudo) o <span class="mono">2</span> (sin recaudo).</div>
+
+          <div class="divider"></div>
+
+          <!-- Lista -->
+          <div class="summary-list">
+            <div class="summary-head">
+              <div>Producto</div>
+              <div>Precio de venta</div>
+            </div>
+            <div id="summaryLines"></div>
+          </div>
+
+          <!-- Totales -->
+          <div class="totals">
+            <div class="tot-line">
+              <div class="tot-muted">Total a recaudar</div>
+              <div class="money" id="sumTotal">$ 0</div>
+            </div>
+            <div class="tot-line">
+              <div class="tot-muted">Precio proveedor</div>
+              <div class="money" id="sumCost">$ 0</div>
+            </div>
+            <div class="tot-line">
+              <div class="tot-muted">Precio de envío</div>
+              <div class="money" id="sumShip">$ 0</div>
+            </div>
+            <div class="tot-line">
+              <div class="tot-muted">Comisión de la plataforma</div>
+              <div class="money" id="sumFee">$ 0</div>
+            </div>
+            <div class="tot-line">
+              <div class="tot-green">Ganancias</div>
+              <div class="money tot-green" id="sumProfit">$ 0</div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:12px;">
+            <div class="field">
+              <label for="total">Total a recaudar (editable)</label>
+              <input id="total" type="number" step="0.01" placeholder="0" value="0" />
+              <div class="hint">Si lo dejas en 0, se autocompleta con la suma de líneas.</div>
+            </div>
+            <div class="field">
+              <label>Envío / Comisión</label>
+              <div class="hint" style="margin:0;">
+                Este panel los muestra en 0 por defecto (puedes ajustar en el código si luego calculas envíos).
+              </div>
+            </div>
+          </div>
 
           <div class="status" id="statusBox">
             <span class="badge neutral" id="statusBadge">SIN ENVIAR</span>
             <div class="small-muted" id="statusText">Aún no has enviado el pedido.</div>
           </div>
 
-          <div class="small-muted" style="margin:14px 0 8px;">Respuesta productos (GET /products/)</div>
-          <div id="productsRespBox" class="codebox" style="max-height:210px;">(vacío)</div>
+          <!-- JSON panel (oculto por defecto) -->
+          <div id="jsonPanel" class="hidden" style="margin-top:14px;">
+            <div class="divider"></div>
 
-          <div class="small-muted" style="margin:14px 0 8px;">Respuesta pedido (POST /orders/create)</div>
-          <div id="respBox" class="codebox" style="max-height:240px;">(vacío)</div>
+            <div class="btns" style="margin-top:0;">
+              <button class="btn btn-ghost" type="button" id="refreshBtn">Actualizar JSON</button>
+              <button class="btn btn-soft" type="button" id="copyJsonBtn">Copiar JSON</button>
+            </div>
 
-          <div class="small-muted" style="margin:14px 0 8px;">Respuesta hook (POST Make)</div>
-          <div id="hookRespBox" class="codebox" style="max-height:240px;">(vacío)</div>
+            <div class="small-muted" style="margin:14px 0 8px;">JSON del pedido</div>
+            <div id="jsonBox" class="codebox">{}</div>
+
+            <div class="small-muted" style="margin:14px 0 8px;">Respuesta productos (GET /products/)</div>
+            <div id="productsRespBox" class="codebox" style="max-height:210px;">(vacío)</div>
+
+            <div class="small-muted" style="margin:14px 0 8px;">Respuesta pedido (POST /orders/create)</div>
+            <div id="respBox" class="codebox" style="max-height:240px;">(vacío)</div>
+
+            <div class="small-muted" style="margin:14px 0 8px;">Respuesta hook (POST Make)</div>
+            <div id="hookRespBox" class="codebox" style="max-height:240px;">(vacío)</div>
+          </div>
+        </div>
+
+        <div class="footer-actions">
+          <button class="btn btn-ghost" type="button" id="cancelBtn">Cancelar</button>
+          <button class="btn btn-primary" type="button" id="sendBtn">Enviar pedido</button>
         </div>
       </div>
     </div>
@@ -559,7 +729,8 @@
       apiProducts: [],
       selectedProductIdx: -1,
       selectedVariantIdx: -1,
-      selectedProductHasVariants: false
+      selectedProductHasVariants: false,
+      _lastComputedFullname: ""
     };
 
     function safeTrim(v){ return (v ?? "").toString().trim(); }
@@ -589,6 +760,16 @@
         .replaceAll(">","&gt;")
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
+    }
+
+    function fmtMoney(n){
+      const num = Number(n);
+      const v = Number.isFinite(num) ? num : 0;
+      try{
+        return "$ " + new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format(v);
+      }catch{
+        return "$ " + Math.round(v);
+      }
     }
 
     function setStatus(kind, text){
@@ -646,7 +827,7 @@
       return body.products.map(p => (typeof p === "object" && p ? ({
         id: p.id,
         name: p.name ?? "",
-        price: p.price,
+        price: (typeof p.price === "number") ? p.price : p.price, // puede venir {} en tu ejemplo
         variants: Array.isArray(p.variants) ? p.variants.map(v => (typeof v === "object" && v ? ({
           id: v.id,
           name: v.name ?? "",
@@ -710,7 +891,7 @@
         });
 
         el("variantHint").textContent = "Este producto requiere seleccionar una variante.";
-        el("priceHint").textContent = "El precio se define por variante (puedes editarlo después en la variación).";
+        el("priceHint").textContent = "El precio se define por variante (editable en el pedido).";
         el("addHint").textContent = "Selecciona una variante para poder agregar.";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
@@ -763,14 +944,12 @@
       const vVal = el("variantSelect").value;
 
       if(!state.selectedProductHasVariants){
-        // sin variantes: siempre listo
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
         el("addToOrderBtn").disabled = false;
         return;
       }
 
-      // con variantes: obligatorio seleccionar
       if(vVal === ""){
         state.selectedVariantIdx = -1;
         el("selectedVariantId").value = "";
@@ -792,29 +971,87 @@
       const productId = lsProductIdFromNumericId(p?.id);
       const productName = p?.name ?? "";
 
-      // Si tiene variantes, NO permitimos agregar sin variante (ya bloqueado por UI)
       if(vOrNull){
         return {
           product_id: productId,
-          price: null,        // no se setea aquí
-          quantity: null,     // con variantes siempre null
+          price: null,
+          quantity: null,
           variations: [{
             variation_id: lsVariantIdFromRawId(vOrNull?.id),
-            price: null,      // solo editable en la variación
+            price: null,
             quantity: 1
           }],
-          _meta: { product_name: productName, variant_name: vOrNull?.name ?? "" }
+          _meta: {
+            product_name: productName,
+            variant_name: vOrNull?.name ?? "",
+            suggested_unit_price: (typeof vOrNull?.price === "number") ? vOrNull.price : 0,
+            suggested_cost_unit: (typeof vOrNull?.price === "number") ? vOrNull.price : 0
+          }
         };
       }
 
-      // sin variantes
+      const suggested = (typeof p?.price === "number") ? p.price : 0;
+
       return {
         product_id: productId,
         price: null,
         quantity: 1,
         variations: [],
-        _meta: { product_name: productName, variant_name: "" }
+        _meta: {
+          product_name: productName,
+          variant_name: "",
+          suggested_unit_price: suggested,
+          suggested_cost_unit: suggested
+        }
       };
+    }
+
+    function getUnitSaleFromItem(item){
+      const hasVars = Array.isArray(item?.variations) && item.variations.length > 0;
+      if(hasVars){
+        // si hay varias variaciones, el unit sale se calcula por cada una
+        return null;
+      }
+      // sin variaciones: si price es string/number
+      const p = item?.price;
+      if(p === null || safeTrim(p) === "") return (Number(item?._meta?.suggested_unit_price) || 0);
+      const n = Number(p);
+      return Number.isFinite(n) ? n : (Number(item?._meta?.suggested_unit_price) || 0);
+    }
+
+    function getLineSaleAndCost(item){
+      const hasVars = Array.isArray(item?.variations) && item.variations.length > 0;
+      let sale = 0;
+      let cost = 0;
+      let qty = 0;
+
+      if(hasVars){
+        for(const v of (item.variations || [])){
+          const q = parseQtyBeforeX(v.quantity, 1);
+          qty += q;
+
+          const vPriceRaw = v?.price;
+          const vSaleUnit = (vPriceRaw === null || safeTrim(vPriceRaw) === "")
+            ? (Number(item?._meta?.suggested_unit_price) || 0)
+            : (Number(vPriceRaw) || (Number(item?._meta?.suggested_unit_price) || 0));
+
+          sale += vSaleUnit * q;
+
+          // “Proveedor”: usamos el precio sugerido como costo (puedes cambiar luego si tienes costo real)
+          const vCostUnit = Number(item?._meta?.suggested_cost_unit) || 0;
+          cost += vCostUnit * q;
+        }
+        return { qty, sale, cost };
+      }
+
+      qty = parseQtyBeforeX(item?.quantity, 1);
+      const unitSale = getUnitSaleFromItem(item) || 0;
+      sale = unitSale * qty;
+
+      const unitCost = Number(item?._meta?.suggested_cost_unit) || 0;
+      cost = unitCost * qty;
+
+      return { qty, sale, cost };
     }
 
     function renderOrderProducts(){
@@ -823,7 +1060,7 @@
 
       if(state.orderProducts.length === 0){
         wrap.innerHTML = `<div class="hint">Aún no has agregado productos. Usa “Agregar al pedido”.</div>`;
-        refreshJsonPreview();
+        refreshAllPanels();
         return;
       }
 
@@ -836,7 +1073,6 @@
         const card = document.createElement("div");
         card.className = "product";
 
-        // regla: si tiene variantes, NO se puede poner price a nivel producto
         const productPriceDisabled = hasVars ? "readonly" : "";
         const productPricePlaceholder = hasVars ? "(bloqueado: precio por variación)" : "(vacío envía null)";
         const productPriceValue = (p.price === null ? "" : String(p.price));
@@ -845,7 +1081,7 @@
           <div class="product-head">
             <div>
               <div class="product-title">${escapeHtml(titleName)}</div>
-              <div class="mini">${escapeHtml(subtitle)}<br/>${hasVars ? "Precio solo en variaciones." : "Puedes ajustar price/quantity. price vacío = null."}</div>
+              <div class="mini">${escapeHtml(subtitle)} · ${hasVars ? "Precio en variaciones." : "Precio opcional."}</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <button class="btn btn-danger" type="button" data-remove-item="${idx}">Quitar</button>
@@ -862,19 +1098,20 @@
               <input ${productPriceDisabled} placeholder="${escapeHtml(productPricePlaceholder)}"
                 value="${escapeHtml(hasVars ? "" : productPriceValue)}"
                 data-item-field="price" data-idx="${idx}" />
-              <div class="hint">${hasVars ? "No se envía price en producto si hay variaciones (permanece null)." : "Deja vacío para null."}</div>
+              <div class="hint">${hasVars ? "No se envía price en producto si hay variaciones." : "Vacío = null. Si quieres, escribe el precio."}</div>
             </div>
           </div>
 
           <div class="row">
             <div class="field">
-              <label>quantity ${hasVars ? "(se envía null)" : "(sin variaciones)"}</label>
+              <label>quantity ${hasVars ? "(se envía null)" : ""}</label>
               <input ${hasVars ? "readonly" : 'type="text"'} placeholder="${hasVars ? "(se envía null)" : "1 (o 2x)"}"
                 value="${hasVars ? "" : escapeHtml(String(p.quantity ?? 1))}" data-item-field="quantity" data-idx="${idx}" />
+              <div class="hint">${hasVars ? "La cantidad va en cada variación." : "Toma el número antes de la “x”."}</div>
             </div>
             <div class="field">
               <label style="opacity:0;">.</label>
-              <div class="hint">${hasVars ? "La cantidad va en cada variación." : "Variations se envía como []"}</div>
+              <div class="hint">Sugerido: <span class="mono">${fmtMoney(Number(p?._meta?.suggested_unit_price) || 0)}</span></div>
             </div>
           </div>
 
@@ -903,7 +1140,7 @@
                   <label>price (variación) (vacío = null)</label>
                   <input placeholder="(vacío envía null)" value="${v.price === null ? "" : escapeHtml(String(v.price))}"
                     data-var-field="price" data-idx="${idx}" data-v-idx="${vIdx}" />
-                  <div class="hint">Aquí sí puedes poner precio.</div>
+                  <div class="hint">Sugerido: <span class="mono">${fmtMoney(Number(p?._meta?.suggested_unit_price) || 0)}</span></div>
                 </div>
               </div>
 
@@ -912,7 +1149,6 @@
                   <label>quantity</label>
                   <input type="text" placeholder="1 (o 2x)" value="${escapeHtml(String(v.quantity ?? 1))}"
                     data-var-field="quantity" data-idx="${idx}" data-v-idx="${vIdx}" />
-                  <div class="hint">Toma el número antes de la “x”.</div>
                 </div>
                 <div class="field">
                   <label style="opacity:0;">.</label>
@@ -928,7 +1164,7 @@
       });
 
       bindOrderEvents();
-      refreshJsonPreview();
+      refreshAllPanels();
     }
 
     function bindOrderEvents(){
@@ -944,7 +1180,7 @@
 
           if(field === "price"){
             if(hasVars){
-              item.price = null; // bloqueado
+              item.price = null;
               inp.value = "";
             }else{
               item.price = (safeTrim(raw) === "") ? null : raw;
@@ -960,7 +1196,7 @@
             }
           }
 
-          refreshJsonPreview();
+          refreshAllPanels();
         };
       });
 
@@ -980,7 +1216,7 @@
             item.variations[vIdx].quantity = parseQtyBeforeX(raw, 1);
           }
 
-          refreshJsonPreview();
+          refreshAllPanels();
         };
       });
 
@@ -1001,7 +1237,6 @@
 
           item.variations.splice(vIdx, 1);
 
-          // si por alguna razón queda sin variaciones, lo dejamos inválido (pero evitamos romper)
           if(item.variations.length === 0){
             item.quantity = 1;
           }else{
@@ -1048,9 +1283,9 @@
         }),
 
         references: safeTrim(el("references").value),
-        rate_type: asInt(el("rate_type").value, 0),
+        rate_type: asInt(el("rate_type").value, 1), // 1 con recaudo, 2 sin recaudo
         notes: safeTrim(el("notes").value),
-        source: safeTrim(el("source").value),
+        source: safeTrim(el("source").value),       // dropdown
         lucidbot_inbox: safeTrim(el("lucidbot_inbox").value),
         ad: safeTrim(el("ad").value)
       };
@@ -1102,6 +1337,74 @@
 
     function refreshJsonPreview(){
       el("jsonBox").textContent = JSON.stringify(buildOrderPayload(), null, 2);
+    }
+
+    function renderSummary(){
+      const wrap = el("summaryLines");
+      wrap.innerHTML = "";
+
+      if(state.orderProducts.length === 0){
+        wrap.innerHTML = `
+          <div class="summary-row">
+            <div class="summary-left">
+              <div class="summary-name">Sin productos</div>
+              <div class="summary-sub">Agrega un producto para ver el resumen.</div>
+            </div>
+            <div class="money">${fmtMoney(0)}</div>
+          </div>
+        `;
+      }else{
+        for(const item of state.orderProducts){
+          const name = safeTrim(item?._meta?.product_name) || "Producto";
+          const varName = safeTrim(item?._meta?.variant_name);
+          const { qty, sale } = getLineSaleAndCost(item);
+
+          const row = document.createElement("div");
+          row.className = "summary-row";
+          row.innerHTML = `
+            <div class="summary-left">
+              <div class="summary-name">${escapeHtml(name)}${qty ? ` x ${escapeHtml(String(qty))}` : ""}</div>
+              <div class="summary-sub">${escapeHtml(varName || (Array.isArray(item?.variations) && item.variations.length ? "Con variación" : "Sin variación"))}</div>
+            </div>
+            <div class="money">${escapeHtml(fmtMoney(sale))}</div>
+          `;
+          wrap.appendChild(row);
+        }
+      }
+
+      // Totales
+      let sumSale = 0;
+      let sumCost = 0;
+
+      for(const item of state.orderProducts){
+        const lc = getLineSaleAndCost(item);
+        sumSale += lc.sale;
+        sumCost += lc.cost;
+      }
+
+      // Total a recaudar: si input total=0, autocompleta con sumSale
+      const totalInput = asNumber(el("total").value, 0);
+      const totalARecaudar = (totalInput && totalInput > 0) ? totalInput : sumSale;
+
+      // si estaba 0, lo ponemos (sin pelear si el usuario luego edita)
+      if(!(totalInput && totalInput > 0)){
+        el("total").value = String(Math.round(totalARecaudar));
+      }
+
+      const ship = 0;
+      const fee  = 0;
+      const profit = totalARecaudar - sumCost - ship - fee;
+
+      el("sumTotal").textContent  = fmtMoney(totalARecaudar);
+      el("sumCost").textContent   = fmtMoney(sumCost);
+      el("sumShip").textContent   = fmtMoney(ship);
+      el("sumFee").textContent    = fmtMoney(fee);
+      el("sumProfit").textContent = fmtMoney(profit);
+    }
+
+    function refreshAllPanels(){
+      renderSummary();
+      refreshJsonPreview();
     }
 
     async function loadProducts(){
@@ -1167,7 +1470,7 @@
 
       if(hasVariants){
         const vVal = el("variantSelect").value;
-        if(vVal === "") return; // obligatorio
+        if(vVal === "") return;
         const v = variants[Number(vVal)] || null;
         if(!v) return;
         state.orderProducts.push(makeOrderItemFromSelection(p, v));
@@ -1179,7 +1482,7 @@
     }
 
     async function sendOrder(){
-      refreshJsonPreview();
+      refreshAllPanels();
 
       const apiKey = safeTrim(el("apiKey").value);
       if(!apiKey){
@@ -1194,7 +1497,6 @@
         return;
       }
 
-      // validación: si un item tiene variations, debe tener al menos 1 variation_id
       for(const it of state.orderProducts){
         const hasVars = Array.isArray(it.variations) && it.variations.length > 0;
         if(hasVars){
@@ -1241,7 +1543,6 @@
         if(res.ok){
           setStatus("ok", `Pedido enviado (HTTP ${res.status}). Enviando hook...`);
 
-          // --- POST MAKE HOOK ---
           const hookPayload = buildHookPayload();
           el("hookRespBox").textContent = "(enviando hook...)";
 
@@ -1293,28 +1594,76 @@
       }
     }
 
+    function bindPayToggle(){
+      const p1 = el("pay1");
+      const p2 = el("pay2");
+
+      const setActive = (val) => {
+        const v = String(val);
+        p1.classList.toggle("active", v === "1");
+        p2.classList.toggle("active", v === "2");
+        el("rate_type").value = v; // 1/2
+        refreshAllPanels();
+      };
+
+      document.querySelectorAll('input[name="pay"]').forEach(r => {
+        r.addEventListener("change", () => setActive(r.value));
+      });
+
+      setActive("1");
+    }
+
+    function bindJsonToggle(){
+      const btn = el("toggleJsonBtn");
+      const panel = el("jsonPanel");
+      btn.onclick = () => {
+        const open = panel.classList.contains("hidden");
+        panel.classList.toggle("hidden", !open);
+        btn.textContent = open ? "Ocultar JSON" : "Mostrar JSON";
+      };
+    }
+
+    function clearAll(){
+      // inputs
+      [
+        "shopify_order_id","discount","ctwa","name","surname","fullname","total","document","client_email","phone",
+        "dir","city","state","references","notes","source","lucidbot_inbox","ad"
+      ].forEach(id => { if(el(id)) el(id).value = ""; });
+
+      el("discount").value = "0";
+      el("total").value = "0";
+
+      // pay to default 1
+      document.querySelector('input[name="pay"][value="1"]').checked = true;
+      el("rate_type").value = "1";
+      el("pay1").classList.add("active");
+      el("pay2").classList.remove("active");
+
+      // order
+      state.orderProducts = [];
+      renderOrderProducts();
+
+      setStatus("neutral", "Formulario reiniciado.");
+      el("respBox").textContent = "(vacío)";
+      el("hookRespBox").textContent = "(vacío)";
+      refreshAllPanels();
+    }
+
     function init(){
       state.orderProducts = [];
       renderOrderProducts();
-      refreshJsonPreview();
+      refreshAllPanels();
       setProductsControlsEnabled(false);
 
       el("loadProductsBtn").onclick = loadProducts;
 
-      el("productSelect").addEventListener("change", () => {
-        updateSelectedProduct();
-      });
-
-      el("variantSelect").addEventListener("change", () => {
-        updateSelectedVariant();
-      });
-
-      el("addToOrderBtn").onclick = () => {
-        addSelectionToOrder();
-      };
+      el("productSelect").addEventListener("change", updateSelectedProduct);
+      el("variantSelect").addEventListener("change", updateSelectedVariant);
+      el("addToOrderBtn").onclick = addSelectionToOrder;
 
       el("sendBtn").onclick = sendOrder;
-      el("refreshBtn").onclick = refreshJsonPreview;
+
+      el("refreshBtn").onclick = refreshAllPanels;
 
       el("copyJsonBtn").onclick = async () => {
         try{
@@ -1325,18 +1674,23 @@
         }
       };
 
+      el("cancelBtn").onclick = clearAll;
+
       ["name","surname"].forEach(id => el(id).addEventListener("input", () => {
         updateFullnameAuto();
-        refreshJsonPreview();
+        refreshAllPanels();
       }));
 
       [
         "shopify_order_id","discount","ctwa","fullname","total","document","client_email","phone","dir","city","state",
-        "references","rate_type","notes","source","lucidbot_inbox","ad"
-      ].forEach(id => el(id).addEventListener("input", refreshJsonPreview));
+        "references","notes","source","lucidbot_inbox","ad"
+      ].forEach(id => el(id).addEventListener("input", refreshAllPanels));
+
+      bindPayToggle();
+      bindJsonToggle();
 
       updateFullnameAuto();
-      refreshJsonPreview();
+      refreshAllPanels();
     }
 
     init();

@@ -343,15 +343,14 @@
     .tot-line{
       display:flex;
       justify-content:space-between;
-      padding:10px 12px;
+      padding:12px 12px;
       border-bottom:1px solid var(--border);
-      font-size:12.5px;
-      font-weight:850;
+      font-size:13px;
+      font-weight:950;
       color:var(--text);
     }
     .tot-line:last-child{ border-bottom:0; }
-    .tot-muted{ color:var(--muted); font-weight:850; }
-    .tot-green{ color:var(--ok); font-weight:950; }
+    .tot-muted{ color:var(--muted); font-weight:900; }
 
     .toggle{
       display:flex; gap:10px; flex-wrap:wrap;
@@ -401,7 +400,7 @@
         <div class="dot" aria-hidden="true"></div>
         <div>
           <div>Crear Orden</div>
-          <div class="sub">Diseño tipo “panel” (cliente + productos + resumen)</div>
+          <div class="sub"></div>
         </div>
       </div>
       <div class="pill"><span class="swatch" aria-hidden="true"></span> Blanco + Azul</div>
@@ -417,7 +416,6 @@
           <div class="card-header">
             <div>
               <h2 class="card-title">Información del cliente</h2>
-              <p class="card-desc">Completa los datos básicos. El canal ahora es un desplegable.</p>
             </div>
             <div class="btns" style="margin:0;">
               <button class="btn btn-soft" type="button" id="loadProductsBtn">Cargar productos</button>
@@ -428,56 +426,55 @@
             <div class="row">
               <div class="field">
                 <label for="apiKey">API Key</label>
-                <input id="apiKey" placeholder="Pega tu api key aquí" autocomplete="off" />
-                <div class="hint">Headers: <span class="mono">Authorization</span> (productos y pedido). Hook: <span class="mono">api_key</span> en body.</div>
+                <input id="apiKey" autocomplete="off" />
               </div>
               <div class="field">
                 <label for="shopify_order_id">shopify_order_id</label>
-                <input id="shopify_order_id" placeholder="Ej: 1234567890" />
+                <input id="shopify_order_id" />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label for="name">Nombres</label>
-                <input id="name" placeholder="Nombres" />
+                <input id="name" />
               </div>
               <div class="field">
                 <label for="surname">Apellidos</label>
-                <input id="surname" placeholder="Apellidos" />
+                <input id="surname" />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label for="phone">Número de teléfono</label>
-                <input id="phone" placeholder="+57..." />
+                <input id="phone" />
               </div>
               <div class="field">
                 <label for="client_email">Correo electrónico</label>
-                <input id="client_email" type="email" placeholder="correo@dominio.com" />
+                <input id="client_email" type="email" />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label for="state">Departamento / Provincia</label>
-                <input id="state" placeholder="Ej: Cundinamarca" />
+                <input id="state" />
               </div>
               <div class="field">
                 <label for="city">Ciudad</label>
-                <input id="city" placeholder="Ej: Bogotá" />
+                <input id="city" />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label for="dir">Dirección y complementos</label>
-                <input id="dir" placeholder="Dirección, barrio, apto, etc." />
+                <input id="dir" />
               </div>
               <div class="field">
                 <label for="references">Referencias</label>
-                <input id="references" placeholder="Ej: portería, color casa, etc." />
+                <input id="references" />
               </div>
             </div>
 
@@ -485,7 +482,7 @@
               <div class="field">
                 <label for="source">Canal</label>
                 <select id="source">
-                  <option value="">(Selecciona)</option>
+                  <option value=""></option>
                   <option value="WhatsApp">WhatsApp</option>
                   <option value="Instagram">Instagram</option>
                   <option value="Messenger">Messenger</option>
@@ -494,46 +491,47 @@
               </div>
               <div class="field">
                 <label for="lucidbot_inbox">lucidbot_inbox</label>
-                <input id="lucidbot_inbox" placeholder="Inbox / canal / id" />
+                <input id="lucidbot_inbox" />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label for="ctwa">ctwa</label>
-                <input id="ctwa" placeholder="campaña / origen CTWA" />
+                <input id="ctwa" />
               </div>
               <div class="field">
                 <label for="ad">ad</label>
-                <input id="ad" placeholder="nombre del anuncio" />
+                <input id="ad" />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label for="document">document</label>
-                <input id="document" placeholder="CC / NIT / documento" />
+                <input id="document" />
               </div>
               <div class="field">
                 <label for="notes">notes</label>
-                <input id="notes" placeholder="Notas rápidas" />
+                <input id="notes" />
               </div>
             </div>
 
-            <div class="row">
+            <div class="row" style="margin-bottom:0;">
               <div class="field">
                 <label for="discount">discount (string)</label>
-                <input id="discount" placeholder="0" value="0" />
+                <input id="discount" value="0" />
               </div>
               <div class="field">
                 <label for="fullname">fullname</label>
-                <input id="fullname" placeholder="Se autocompleta (puedes editarlo)" />
-                <div class="hint">Se autogenera con <span class="mono">name + surname</span>.</div>
+                <input id="fullname" />
               </div>
             </div>
 
             <!-- rate_type hidden: se controla por Método de pago -->
             <input id="rate_type" type="number" value="1" class="hidden" />
+            <!-- total hidden: se calcula desde el resumen -->
+            <input id="total" type="number" value="0" class="hidden" />
           </div>
         </div>
 
@@ -543,7 +541,7 @@
             <div>
               <h2 class="card-title">Seleccionar productos</h2>
               <p class="card-desc">
-                Si un producto tiene variantes, debes elegir una variante (no se puede elegir el “general”).
+                Si un producto tiene variantes, debes elegir una variante.
               </p>
             </div>
           </div>
@@ -553,13 +551,13 @@
               <div class="field">
                 <label for="productSelect">Producto</label>
                 <select id="productSelect" disabled>
-                  <option value="">(Carga los productos)</option>
+                  <option value=""></option>
                 </select>
               </div>
               <div class="field">
                 <label for="variantSelect">Variante</label>
                 <select id="variantSelect" disabled>
-                  <option value="">(Selecciona un producto)</option>
+                  <option value=""></option>
                 </select>
                 <div class="hint" id="variantHint">—</div>
               </div>
@@ -568,24 +566,24 @@
             <div class="row">
               <div class="field">
                 <label for="selectedProductId">product_id (se envía)</label>
-                <input id="selectedProductId" readonly placeholder="Se llena al elegir producto" />
+                <input id="selectedProductId" readonly />
               </div>
               <div class="field">
                 <label for="selectedVariantId">variation_id (se envía si aplica)</label>
-                <input id="selectedVariantId" readonly placeholder="Se llena al elegir variante" />
+                <input id="selectedVariantId" readonly />
               </div>
             </div>
 
             <div class="row">
               <div class="field">
                 <label for="suggestedPrice">Precio sugerido (referencia)</label>
-                <input id="suggestedPrice" readonly placeholder="(Según variante o producto)" />
+                <input id="suggestedPrice" readonly />
                 <div class="hint" id="priceHint">—</div>
               </div>
               <div class="field" style="justify-content:flex-end;">
                 <label style="opacity:0;">.</label>
                 <button class="btn btn-primary" type="button" id="addToOrderBtn" disabled>Agregar al pedido</button>
-                <div class="hint" id="addHint">Selecciona producto.</div>
+                <div class="hint" id="addHint"></div>
               </div>
             </div>
 
@@ -594,9 +592,6 @@
             <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px;">
               <div>
                 <div style="font-weight:950;">Productos del pedido</div>
-                <div class="mini">
-                  Con variantes: quantity del producto se envía <span class="mono">null</span>, y la cantidad va en cada variación.
-                </div>
               </div>
             </div>
 
@@ -610,7 +605,6 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">Resumen de la orden</h2>
-            <p class="card-desc">Método de pago (recaudo / sin recaudo) y totales tipo “panel”.</p>
           </div>
           <div class="btns" style="margin:0;">
             <button class="btn btn-soft" type="button" id="toggleJsonBtn">Mostrar JSON</button>
@@ -630,7 +624,6 @@
               Sin recaudo
             </label>
           </div>
-          <div class="hint">Se envía internamente como <span class="mono">rate_type: 1</span> (con recaudo) o <span class="mono">2</span> (sin recaudo).</div>
 
           <div class="divider"></div>
 
@@ -643,41 +636,11 @@
             <div id="summaryLines"></div>
           </div>
 
-          <!-- Totales -->
+          <!-- Solo total -->
           <div class="totals">
             <div class="tot-line">
               <div class="tot-muted">Total a recaudar</div>
               <div class="money" id="sumTotal">$ 0</div>
-            </div>
-            <div class="tot-line">
-              <div class="tot-muted">Precio proveedor</div>
-              <div class="money" id="sumCost">$ 0</div>
-            </div>
-            <div class="tot-line">
-              <div class="tot-muted">Precio de envío</div>
-              <div class="money" id="sumShip">$ 0</div>
-            </div>
-            <div class="tot-line">
-              <div class="tot-muted">Comisión de la plataforma</div>
-              <div class="money" id="sumFee">$ 0</div>
-            </div>
-            <div class="tot-line">
-              <div class="tot-green">Ganancias</div>
-              <div class="money tot-green" id="sumProfit">$ 0</div>
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:12px;">
-            <div class="field">
-              <label for="total">Total a recaudar (editable)</label>
-              <input id="total" type="number" step="0.01" placeholder="0" value="0" />
-              <div class="hint">Si lo dejas en 0, se autocompleta con la suma de líneas.</div>
-            </div>
-            <div class="field">
-              <label>Envío / Comisión</label>
-              <div class="hint" style="margin:0;">
-                Este panel los muestra en 0 por defecto (puedes ajustar en el código si luego calculas envíos).
-              </div>
             </div>
           </div>
 
@@ -805,11 +768,11 @@
       el("variantSelect").disabled = !enabled;
       el("addToOrderBtn").disabled = true;
       if(!enabled){
-        el("productSelect").innerHTML = `<option value="">(Carga los productos)</option>`;
-        el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("productSelect").innerHTML = `<option value=""></option>`;
+        el("variantSelect").innerHTML = `<option value=""></option>`;
         el("variantHint").textContent = "—";
         el("priceHint").textContent = "—";
-        el("addHint").textContent = "Selecciona producto.";
+        el("addHint").textContent = "";
         el("selectedProductId").value = "";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
@@ -827,7 +790,7 @@
       return body.products.map(p => (typeof p === "object" && p ? ({
         id: p.id,
         name: p.name ?? "",
-        price: (typeof p.price === "number") ? p.price : p.price, // puede venir {} en tu ejemplo
+        price: (typeof p.price === "number") ? p.price : p.price,
         variants: Array.isArray(p.variants) ? p.variants.map(v => (typeof v === "object" && v ? ({
           id: v.id,
           name: v.name ?? "",
@@ -848,7 +811,7 @@
 
     function fillProductSelect(){
       const sel = el("productSelect");
-      sel.innerHTML = `<option value="">(Selecciona un producto)</option>`;
+      sel.innerHTML = `<option value=""></option>`;
 
       state.apiProducts.forEach((p, idx) => {
         const opt = document.createElement("option");
@@ -857,10 +820,10 @@
         sel.appendChild(opt);
       });
 
-      el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+      el("variantSelect").innerHTML = `<option value=""></option>`;
       el("variantHint").textContent = "—";
       el("priceHint").textContent = "—";
-      el("addHint").textContent = "Selecciona producto.";
+      el("addHint").textContent = "";
       el("selectedProductId").value = "";
       el("selectedVariantId").value = "";
       el("suggestedPrice").value = "";
@@ -882,7 +845,7 @@
       state.selectedVariantIdx = -1;
 
       if(hasVariants){
-        sel.appendChild(new Option("(Selecciona una variante)", ""));
+        sel.appendChild(new Option("", ""));
         variants.forEach((v, vIdx) => {
           const opt = document.createElement("option");
           opt.value = String(vIdx);
@@ -890,21 +853,20 @@
           sel.appendChild(opt);
         });
 
-        el("variantHint").textContent = "Este producto requiere seleccionar una variante.";
-        el("priceHint").textContent = "El precio se define por variante (editable en el pedido).";
-        el("addHint").textContent = "Selecciona una variante para poder agregar.";
+        el("variantHint").textContent = "Selecciona una variante.";
+        el("priceHint").textContent = "Precio por variante.";
+        el("addHint").textContent = "";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
         el("addToOrderBtn").disabled = true;
         return;
       }
 
-      // sin variantes
       sel.appendChild(new Option("(Sin variantes)", "__none__"));
       sel.value = "__none__";
-      el("variantHint").textContent = "Este producto no tiene variantes.";
-      el("priceHint").textContent = "Puedes agregar el producto sin variaciones.";
-      el("addHint").textContent = "Listo para agregar.";
+      el("variantHint").textContent = "Sin variantes.";
+      el("priceHint").textContent = "Puedes agregar el producto.";
+      el("addHint").textContent = "";
       el("selectedVariantId").value = "";
       el("suggestedPrice").value = (typeof p.price === "number") ? String(p.price) : "";
       el("addToOrderBtn").disabled = false;
@@ -917,10 +879,10 @@
       state.selectedProductIdx = pIdx;
 
       if(pIdx < 0){
-        el("variantSelect").innerHTML = `<option value="">(Selecciona un producto)</option>`;
+        el("variantSelect").innerHTML = `<option value=""></option>`;
         el("variantHint").textContent = "—";
         el("priceHint").textContent = "—";
-        el("addHint").textContent = "Selecciona producto.";
+        el("addHint").textContent = "";
         el("selectedProductId").value = "";
         el("selectedVariantId").value = "";
         el("suggestedPrice").value = "";
@@ -972,6 +934,7 @@
       const productName = p?.name ?? "";
 
       if(vOrNull){
+        const suggested = (typeof vOrNull?.price === "number") ? vOrNull.price : 0;
         return {
           product_id: productId,
           price: null,
@@ -984,8 +947,7 @@
           _meta: {
             product_name: productName,
             variant_name: vOrNull?.name ?? "",
-            suggested_unit_price: (typeof vOrNull?.price === "number") ? vOrNull.price : 0,
-            suggested_cost_unit: (typeof vOrNull?.price === "number") ? vOrNull.price : 0
+            suggested_unit_price: suggested
           }
         };
       }
@@ -1000,29 +962,14 @@
         _meta: {
           product_name: productName,
           variant_name: "",
-          suggested_unit_price: suggested,
-          suggested_cost_unit: suggested
+          suggested_unit_price: suggested
         }
       };
     }
 
-    function getUnitSaleFromItem(item){
-      const hasVars = Array.isArray(item?.variations) && item.variations.length > 0;
-      if(hasVars){
-        // si hay varias variaciones, el unit sale se calcula por cada una
-        return null;
-      }
-      // sin variaciones: si price es string/number
-      const p = item?.price;
-      if(p === null || safeTrim(p) === "") return (Number(item?._meta?.suggested_unit_price) || 0);
-      const n = Number(p);
-      return Number.isFinite(n) ? n : (Number(item?._meta?.suggested_unit_price) || 0);
-    }
-
-    function getLineSaleAndCost(item){
+    function getLineSale(item){
       const hasVars = Array.isArray(item?.variations) && item.variations.length > 0;
       let sale = 0;
-      let cost = 0;
       let qty = 0;
 
       if(hasVars){
@@ -1036,22 +983,19 @@
             : (Number(vPriceRaw) || (Number(item?._meta?.suggested_unit_price) || 0));
 
           sale += vSaleUnit * q;
-
-          // “Proveedor”: usamos el precio sugerido como costo (puedes cambiar luego si tienes costo real)
-          const vCostUnit = Number(item?._meta?.suggested_cost_unit) || 0;
-          cost += vCostUnit * q;
         }
-        return { qty, sale, cost };
+        return { qty, sale };
       }
 
       qty = parseQtyBeforeX(item?.quantity, 1);
-      const unitSale = getUnitSaleFromItem(item) || 0;
+
+      const pRaw = item?.price;
+      const unitSale = (pRaw === null || safeTrim(pRaw) === "")
+        ? (Number(item?._meta?.suggested_unit_price) || 0)
+        : (Number(pRaw) || (Number(item?._meta?.suggested_unit_price) || 0));
+
       sale = unitSale * qty;
-
-      const unitCost = Number(item?._meta?.suggested_cost_unit) || 0;
-      cost = unitCost * qty;
-
-      return { qty, sale, cost };
+      return { qty, sale };
     }
 
     function renderOrderProducts(){
@@ -1059,7 +1003,7 @@
       wrap.innerHTML = "";
 
       if(state.orderProducts.length === 0){
-        wrap.innerHTML = `<div class="hint">Aún no has agregado productos. Usa “Agregar al pedido”.</div>`;
+        wrap.innerHTML = `<div class="hint">—</div>`;
         refreshAllPanels();
         return;
       }
@@ -1074,14 +1018,13 @@
         card.className = "product";
 
         const productPriceDisabled = hasVars ? "readonly" : "";
-        const productPricePlaceholder = hasVars ? "(bloqueado: precio por variación)" : "(vacío envía null)";
         const productPriceValue = (p.price === null ? "" : String(p.price));
 
         card.innerHTML = `
           <div class="product-head">
             <div>
               <div class="product-title">${escapeHtml(titleName)}</div>
-              <div class="mini">${escapeHtml(subtitle)} · ${hasVars ? "Precio en variaciones." : "Precio opcional."}</div>
+              <div class="mini">${escapeHtml(subtitle)}</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <button class="btn btn-danger" type="button" data-remove-item="${idx}">Quitar</button>
@@ -1095,23 +1038,22 @@
             </div>
             <div class="field">
               <label>price (producto)</label>
-              <input ${productPriceDisabled} placeholder="${escapeHtml(productPricePlaceholder)}"
+              <input ${productPriceDisabled}
                 value="${escapeHtml(hasVars ? "" : productPriceValue)}"
                 data-item-field="price" data-idx="${idx}" />
-              <div class="hint">${hasVars ? "No se envía price en producto si hay variaciones." : "Vacío = null. Si quieres, escribe el precio."}</div>
             </div>
           </div>
 
           <div class="row">
             <div class="field">
-              <label>quantity ${hasVars ? "(se envía null)" : ""}</label>
-              <input ${hasVars ? "readonly" : 'type="text"'} placeholder="${hasVars ? "(se envía null)" : "1 (o 2x)"}"
-                value="${hasVars ? "" : escapeHtml(String(p.quantity ?? 1))}" data-item-field="quantity" data-idx="${idx}" />
-              <div class="hint">${hasVars ? "La cantidad va en cada variación." : "Toma el número antes de la “x”."}</div>
+              <label>quantity</label>
+              <input ${hasVars ? "readonly" : 'type="text"'}
+                value="${hasVars ? "" : escapeHtml(String(p.quantity ?? 1))}"
+                data-item-field="quantity" data-idx="${idx}" />
             </div>
             <div class="field">
               <label style="opacity:0;">.</label>
-              <div class="hint">Sugerido: <span class="mono">${fmtMoney(Number(p?._meta?.suggested_unit_price) || 0)}</span></div>
+              <div class="hint"><span class="mono">${fmtMoney(Number(p?._meta?.suggested_unit_price) || 0)}</span></div>
             </div>
           </div>
 
@@ -1128,7 +1070,7 @@
             vBox.innerHTML = `
               <div class="variation-head">
                 <div style="font-weight:950; font-size:12px;">Variación</div>
-                <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar variación</button>
+                <button class="btn btn-danger" type="button" data-remove-variation="${idx}" data-v-idx="${vIdx}">Quitar</button>
               </div>
 
               <div class="row">
@@ -1137,29 +1079,28 @@
                   <input readonly value="${escapeHtml(v.variation_id)}" />
                 </div>
                 <div class="field">
-                  <label>price (variación) (vacío = null)</label>
-                  <input placeholder="(vacío envía null)" value="${v.price === null ? "" : escapeHtml(String(v.price))}"
+                  <label>price (variación)</label>
+                  <input value="${v.price === null ? "" : escapeHtml(String(v.price))}"
                     data-var-field="price" data-idx="${idx}" data-v-idx="${vIdx}" />
-                  <div class="hint">Sugerido: <span class="mono">${fmtMoney(Number(p?._meta?.suggested_unit_price) || 0)}</span></div>
                 </div>
               </div>
 
               <div class="row">
                 <div class="field">
                   <label>quantity</label>
-                  <input type="text" placeholder="1 (o 2x)" value="${escapeHtml(String(v.quantity ?? 1))}"
+                  <input type="text" value="${escapeHtml(String(v.quantity ?? 1))}"
                     data-var-field="quantity" data-idx="${idx}" data-v-idx="${vIdx}" />
                 </div>
                 <div class="field">
                   <label style="opacity:0;">.</label>
-                  <div class="hint">Por defecto: 1</div>
+                  <div class="hint"></div>
                 </div>
               </div>
             `;
             varsWrap.appendChild(vBox);
           });
         }else{
-          varsWrap.innerHTML = `<div class="hint">Sin variaciones.</div>`;
+          varsWrap.innerHTML = `<div class="hint"></div>`;
         }
       });
 
@@ -1283,9 +1224,9 @@
         }),
 
         references: safeTrim(el("references").value),
-        rate_type: asInt(el("rate_type").value, 1), // 1 con recaudo, 2 sin recaudo
+        rate_type: asInt(el("rate_type").value, 1),
         notes: safeTrim(el("notes").value),
-        source: safeTrim(el("source").value),       // dropdown
+        source: safeTrim(el("source").value),
         lucidbot_inbox: safeTrim(el("lucidbot_inbox").value),
         ad: safeTrim(el("ad").value)
       };
@@ -1347,8 +1288,8 @@
         wrap.innerHTML = `
           <div class="summary-row">
             <div class="summary-left">
-              <div class="summary-name">Sin productos</div>
-              <div class="summary-sub">Agrega un producto para ver el resumen.</div>
+              <div class="summary-name"></div>
+              <div class="summary-sub"></div>
             </div>
             <div class="money">${fmtMoney(0)}</div>
           </div>
@@ -1357,7 +1298,7 @@
         for(const item of state.orderProducts){
           const name = safeTrim(item?._meta?.product_name) || "Producto";
           const varName = safeTrim(item?._meta?.variant_name);
-          const { qty, sale } = getLineSaleAndCost(item);
+          const { qty, sale } = getLineSale(item);
 
           const row = document.createElement("div");
           row.className = "summary-row";
@@ -1372,34 +1313,14 @@
         }
       }
 
-      // Totales
       let sumSale = 0;
-      let sumCost = 0;
-
       for(const item of state.orderProducts){
-        const lc = getLineSaleAndCost(item);
-        sumSale += lc.sale;
-        sumCost += lc.cost;
+        const { sale } = getLineSale(item);
+        sumSale += sale;
       }
 
-      // Total a recaudar: si input total=0, autocompleta con sumSale
-      const totalInput = asNumber(el("total").value, 0);
-      const totalARecaudar = (totalInput && totalInput > 0) ? totalInput : sumSale;
-
-      // si estaba 0, lo ponemos (sin pelear si el usuario luego edita)
-      if(!(totalInput && totalInput > 0)){
-        el("total").value = String(Math.round(totalARecaudar));
-      }
-
-      const ship = 0;
-      const fee  = 0;
-      const profit = totalARecaudar - sumCost - ship - fee;
-
-      el("sumTotal").textContent  = fmtMoney(totalARecaudar);
-      el("sumCost").textContent   = fmtMoney(sumCost);
-      el("sumShip").textContent   = fmtMoney(ship);
-      el("sumFee").textContent    = fmtMoney(fee);
-      el("sumProfit").textContent = fmtMoney(profit);
+      el("sumTotal").textContent = fmtMoney(sumSale);
+      el("total").value = String(Math.round(sumSale));
     }
 
     function refreshAllPanels(){
@@ -1447,7 +1368,7 @@
         }
 
         if(typeof body === "string"){
-          throw new Error("La respuesta no es JSON (vino como texto).");
+          throw new Error("La respuesta no es JSON.");
         }
 
         state.apiProducts = normalizeProductsResponse(body);
@@ -1493,7 +1414,7 @@
 
       if(state.orderProducts.length === 0){
         setStatus("bad", "Agrega al menos 1 producto.");
-        el("respBox").textContent = "No hay productos en el pedido. Usa “Agregar al pedido”.";
+        el("respBox").textContent = "No hay productos en el pedido.";
         return;
       }
 
@@ -1602,7 +1523,7 @@
         const v = String(val);
         p1.classList.toggle("active", v === "1");
         p2.classList.toggle("active", v === "2");
-        el("rate_type").value = v; // 1/2
+        el("rate_type").value = v;
         refreshAllPanels();
       };
 
@@ -1624,22 +1545,18 @@
     }
 
     function clearAll(){
-      // inputs
       [
-        "shopify_order_id","discount","ctwa","name","surname","fullname","total","document","client_email","phone",
+        "shopify_order_id","discount","ctwa","name","surname","fullname","document","client_email","phone",
         "dir","city","state","references","notes","source","lucidbot_inbox","ad"
       ].forEach(id => { if(el(id)) el(id).value = ""; });
 
       el("discount").value = "0";
-      el("total").value = "0";
 
-      // pay to default 1
       document.querySelector('input[name="pay"][value="1"]').checked = true;
       el("rate_type").value = "1";
       el("pay1").classList.add("active");
       el("pay2").classList.remove("active");
 
-      // order
       state.orderProducts = [];
       renderOrderProducts();
 
@@ -1670,7 +1587,7 @@
           await navigator.clipboard.writeText(el("jsonBox").textContent || "{}");
           setStatus("ok", "JSON copiado al portapapeles.");
         }catch(e){
-          setStatus("bad", "No se pudo copiar (permiso del navegador).");
+          setStatus("bad", "No se pudo copiar.");
         }
       };
 
@@ -1682,7 +1599,7 @@
       }));
 
       [
-        "shopify_order_id","discount","ctwa","fullname","total","document","client_email","phone","dir","city","state",
+        "shopify_order_id","discount","ctwa","fullname","document","client_email","phone","dir","city","state",
         "references","notes","source","lucidbot_inbox","ad"
       ].forEach(id => el(id).addEventListener("input", refreshAllPanels));
 
@@ -1697,3 +1614,4 @@
   </script>
 </body>
 </html>
+```
